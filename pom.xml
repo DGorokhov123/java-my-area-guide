@@ -27,6 +27,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>21</java.version>
         <!-- DEPENDENCIES -->
+        <stat-client.version>0.0.1-SNAPSHOT</stat-client.version>
         <spring-cloud-dependencies.version>2025.0.0</spring-cloud-dependencies.version>
         <!-- PLUGINS -->
         <maven-compiler-plugin.version>3.14.0</maven-compiler-plugin.version>
@@ -41,6 +42,12 @@
                 <version>${spring-cloud-dependencies.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>ru.practicum</groupId>
+                <artifactId>stat-client</artifactId>
+                <version>${stat-client.version}</version>
             </dependency>
 
         </dependencies>
