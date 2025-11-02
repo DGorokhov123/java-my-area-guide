@@ -24,3 +24,4 @@ main-postgres/
 *.ipr
 /stat-postgres/
 /main-postgres/
+/.github/workflows/
