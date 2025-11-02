@@ -1,6 +1,6 @@
 info:
   app:
-    name: main-service
+    name: stats-service
     description: My Area Guide
     version: 1.0-SNAPSHOT
   company:
