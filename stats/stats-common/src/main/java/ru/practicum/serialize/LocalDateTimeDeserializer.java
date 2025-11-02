@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -20,8 +21,8 @@ public class LocalDateTimeDeserializer extends StdDeserializer<LocalDateTime> {
         super(LocalDateTime.class);
     }
 
-    @Value("${explore-with-me.datetime.format}")
-    public void setFormatter(String dateTimeFormat) {
+    @Autowired
+    public void setFormatter(@Value("${explore-with-me.datetime.format}") String dateTimeFormat) {
         this.formatter = DateTimeFormatter.ofPattern(dateTimeFormat);
     }
 

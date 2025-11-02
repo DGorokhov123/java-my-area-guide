@@ -3,6 +3,7 @@ package ru.practicum.serialize;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -19,8 +20,8 @@ public class LocalDateTimeSerializer extends StdSerializer<LocalDateTime> {
         super(LocalDateTime.class);
     }
 
-    @Value("${explore-with-me.datetime.format}")
-    public void setFormatter(String dateTimeFormat) {
+    @Autowired
+    public void setFormatter(@Value("${explore-with-me.datetime.format}") String dateTimeFormat) {
         this.formatter = DateTimeFormatter.ofPattern(dateTimeFormat);
     }
 
