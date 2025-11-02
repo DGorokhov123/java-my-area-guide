@@ -1,5 +1,6 @@
 package ru.practicum.client;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -11,6 +12,7 @@ import ru.practicum.ewm.client.StatClient;
 import java.time.LocalDateTime;
 import java.util.Collection;
 
+@Disabled("Выполнять только при запущенных Discovery and Config servers")
 @AutoConfigureTestDatabase
 @SpringBootTest
 public class StatClientTest {
