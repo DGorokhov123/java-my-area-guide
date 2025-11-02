@@ -18,7 +18,7 @@ management:
   info.env.enabled: true
 
 explore-with-me:
-  stat-server.url: http://localhost:9090
+  stat-server.discovery.name: stat-service
   datetime.format: yyyy-MM-dd HH:mm:ss
   main.datetime.format: yyyy-MM-dd HH:mm:ss
   stat.datetime.format: yyyy-MM-dd HH:mm:ss

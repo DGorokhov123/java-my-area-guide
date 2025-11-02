@@ -21,7 +21,7 @@ explore-with-me:
   datetime.format: yyyy-MM-dd HH:mm:ss
 
 server:
-  port: 9090
+  port: 0
   shutdown: graceful
 
 spring:

@@ -1,11 +1,13 @@
 package ru.practicum.ewm.client;
 
-import jakarta.annotation.PostConstruct;
-import lombok.AccessLevel;
-import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.cloud.client.discovery.DiscoveryClient;
+import org.springframework.context.event.EventListener;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.MediaType;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
@@ -18,28 +20,61 @@ import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
-import static org.springframework.http.MediaType.APPLICATION_JSON;
 
-@Component
 @Slf4j
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@Component
 public class RestStatClient implements StatClient {
-    static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-    RestClient restClient;
-    String statUrl;
 
-    public RestStatClient(@Value("${explore-with-me.stat-server.url}") String statUrl) {
-        this.restClient = RestClient
-                .builder()
-                .baseUrl(statUrl)
-                .build();
-        this.statUrl = statUrl;
+    private final DiscoveryClient discoveryClient;
+    private final Random random = new Random();
+    private final DateTimeFormatter formatter;
+    private final String name;
+
+    private String statUrl;
+    private RestClient restClient;
+    private boolean doRenewingServerUrl = false;
+
+    public RestStatClient(
+            DiscoveryClient discoveryClient,
+            @Value("${explore-with-me.stat-server.discovery.name:}") String name,
+            @Value("${explore-with-me.stat-server.url:http://localhost:9090}") String url,
+            @Value("${explore-with-me.stat.datetime.format}") String format
+    ) {
+        this.discoveryClient = discoveryClient;
+        this.name = name;
+        this.formatter = DateTimeFormatter.ofPattern(format);
+        this.statUrl = url;
+        this.restClient = RestClient.builder().baseUrl(statUrl).build();
     }
 
-    @PostConstruct
+    @EventListener(ApplicationReadyEvent.class)
     public void init() {
-        System.out.println(statUrl);
+        if (name == null || name.isBlank()) return;
+        retrieveServerUrl();
+        doRenewingServerUrl = true;
+    }
+
+    @Scheduled(fixedDelay = 5000)
+    public void renewServerUrl() {
+        if (doRenewingServerUrl) retrieveServerUrl();
+    }
+
+    private void retrieveServerUrl() {
+        try {
+            List<String> urls = discoveryClient.getInstances(name).stream()
+                    .map(i -> i.getUri().toString())
+                    .toList();
+
+            if (urls.isEmpty() || urls.contains(statUrl)) return;
+
+            statUrl = urls.get(random.nextInt(urls.size()));
+            restClient = RestClient.builder().baseUrl(statUrl).build();
+            log.info("Retrieved new stat server url: {}", statUrl);
+        } catch (Exception e) {
+            log.warn("Discovery server error: {}", e.getMessage());
+        }
     }
 
     @Override
@@ -49,11 +84,11 @@ public class RestStatClient implements StatClient {
                     .post()
                     .uri("/hit")
                     .body(eventHitDto)
-                    .contentType(APPLICATION_JSON)
+                    .contentType(MediaType.APPLICATION_JSON)
                     .retrieve()
                     .toBodilessEntity();
         } catch (RestClientException e) {
-            log.error("Не удалось сохранить информацию о запросе к эндпоинту: {}", e.getMessage());
+            log.warn("Failed call /hit on stat server: {}", e.getMessage());
         }
     }
 
@@ -63,25 +98,23 @@ public class RestStatClient implements StatClient {
             UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString("/stats")
                     .queryParam("start", start.format(formatter))
                     .queryParam("end", end.format(formatter));
-
-            if (uris != null && !uris.isEmpty()) {
+            if (uris != null && !uris.isEmpty())
                 uriBuilder.queryParam("uris", String.join(",", uris));
-            }
-            if (unique != null) {
+            if (unique != null)
                 uriBuilder.queryParam("unique", unique);
-            }
-
             String uri = uriBuilder.build().toUriString();
-
             return restClient
                     .get()
                     .uri(uri)
                     .retrieve()
-                    .body(new ParameterizedTypeReference<Collection<EventStatsResponseDto>>() {
-                    });
+                    .body(
+                            new ParameterizedTypeReference<Collection<EventStatsResponseDto>>() {
+                            }
+                    );
         } catch (RestClientException e) {
-            log.error("Не удалось получить статистику по посещениям: {}", e.getMessage());
+            log.error("Failed call /stats on stat server: {}", e.getMessage());
             return Collections.emptyList();
         }
     }
+
 }

@@ -11,9 +11,11 @@ public interface StatClient {
 
     void hit(EventHitDto eventHitDto);
 
-    Collection<EventStatsResponseDto> stats(LocalDateTime start,
-                                            LocalDateTime end,
-                                            List<String> uris,
-                                            Boolean unique);
+    Collection<EventStatsResponseDto> stats(
+            LocalDateTime start,
+            LocalDateTime end,
+            List<String> uris,
+            Boolean unique
+    );
 
 }
