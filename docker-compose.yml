@@ -1,14 +1,60 @@
 services:
-  stats-server:
-    ports:
-      - "9090:9090"
 
-  stats-db:
-    image: postgres:16.1
-
-  ewm-service:
+  main-server:
+    build: server
+    image: main-server
+    container_name: main-server
+    restart: on-failure
     ports:
       - "8080:8080"
+    depends_on:
+      - db-main
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db-main:5432/main_db
+      - EXPLORE_WITH_ME.STAT_SERVER.URL=http://stats-server:9090
 
-  ewm-db:
-    image: postgres:16.1
+  stats-server:
+    build: stat/stat-server
+    image: stat-server
+    container_name: stat-server
+    restart: on-failure
+    ports:
+      - "9090:9090"
+    depends_on:
+      - db-stat
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db-stat:5432/stat_db
+
+  db-main:
+    image: postgres:alpine
+    container_name: db-main
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./main-postgres:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_DB=main_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=12345
+    healthcheck:
+      test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
+      timeout: 5s
+      interval: 5s
+      retries: 10
+
+  db-stat:
+    image: postgres:alpine
+    container_name: db-stat
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./stat-postgres:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_DB=stat_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=12345
+    healthcheck:
+      test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
+      timeout: 5s
+      interval: 5s
+      retries: 10

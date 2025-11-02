@@ -11,6 +11,8 @@ hs_err_pid*
 replay_pid*
 out/
 target/
+stat-postgres/
+main-postgres/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
@@ -20,3 +22,5 @@ target/
 *.iws
 *.iml
 *.ipr
+/stat-postgres/
+/main-postgres/
