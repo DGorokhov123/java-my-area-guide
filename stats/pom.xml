@@ -10,20 +10,13 @@
         <version>0.0.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>stat</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <artifactId>stats</artifactId>
     <packaging>pom</packaging>
 
-    <properties>
-        <maven.compiler.source>23</maven.compiler.source>
-        <maven.compiler.target>23</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
-
     <modules>
-        <module>stat-common</module>
-        <module>stat-server</module>
-        <module>stat-client</module>
+        <module>stats-common</module>
+        <module>stats-server</module>
+        <module>stats-client</module>
     </modules>
 
 </project>

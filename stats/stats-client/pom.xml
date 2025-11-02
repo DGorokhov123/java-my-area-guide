@@ -6,25 +6,17 @@
 
     <parent>
         <groupId>ru.practicum</groupId>
-        <artifactId>stat</artifactId>
+        <artifactId>stats</artifactId>
         <version>0.0.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>stat-client</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
-
-    <properties>
-        <maven.compiler.source>22</maven.compiler.source>
-        <maven.compiler.target>22</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
+    <artifactId>stats-client</artifactId>
 
     <dependencies>
 
         <dependency>
             <groupId>ru.practicum</groupId>
-            <artifactId>stat-common</artifactId>
-            <version>${project.version}</version>
+            <artifactId>stats-common</artifactId>
         </dependency>
 
         <dependency>

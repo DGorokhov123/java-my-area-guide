@@ -6,25 +6,17 @@
 
     <parent>
         <groupId>ru.practicum</groupId>
-        <artifactId>stat</artifactId>
+        <artifactId>stats</artifactId>
         <version>0.0.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>stat-server</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
-
-    <properties>
-        <maven.compiler.source>23</maven.compiler.source>
-        <maven.compiler.target>23</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
+    <artifactId>stats-server</artifactId>
 
     <dependencies>
 
         <dependency>
             <groupId>ru.practicum</groupId>
-            <artifactId>stat-common</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <artifactId>stats-common</artifactId>
         </dependency>
 
         <dependency>
@@ -35,7 +27,6 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.7.5</version>
         </dependency>
 
         <dependency>
@@ -103,7 +94,6 @@
     </dependencies>
 
     <build>
-
         <plugins>
 
             <plugin>
@@ -114,7 +104,6 @@
                         <path>
                             <groupId>org.projectlombok</groupId>
                             <artifactId>lombok</artifactId>
-                            <version>1.18.30</version> <!-- Укажите актуальную версию -->
                         </path>
                         <path>
                             <groupId>org.mapstruct</groupId>
@@ -139,7 +128,6 @@
             </plugin>
 
         </plugins>
-
     </build>
 
 </project>
