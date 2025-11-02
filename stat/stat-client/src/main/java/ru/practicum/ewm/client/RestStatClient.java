@@ -1,0 +1,120 @@
+package ru.practicum.ewm.client;
+
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.cloud.client.discovery.DiscoveryClient;
+import org.springframework.context.event.EventListener;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.MediaType;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.util.UriComponentsBuilder;
+import ru.practicum.EventHitDto;
+import ru.practicum.EventStatsResponseDto;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
+
+
+@Slf4j
+@Component
+public class RestStatClient implements StatClient {
+
+    private final DiscoveryClient discoveryClient;
+    private final Random random = new Random();
+    private final DateTimeFormatter formatter;
+    private final String name;
+
+    private String statUrl;
+    private RestClient restClient;
+    private boolean doRenewingServerUrl = false;
+
+    public RestStatClient(
+            DiscoveryClient discoveryClient,
+            @Value("${explore-with-me.stat-server.discovery.name:}") String name,
+            @Value("${explore-with-me.stat-server.url:http://localhost:9090}") String url,
+            @Value("${explore-with-me.stat.datetime.format}") String format
+    ) {
+        this.discoveryClient = discoveryClient;
+        this.name = name;
+        this.formatter = DateTimeFormatter.ofPattern(format);
+        this.statUrl = url;
+        this.restClient = RestClient.builder().baseUrl(statUrl).build();
+    }
+
+    @EventListener(ApplicationReadyEvent.class)
+    public void init() {
+        if (name == null || name.isBlank()) return;
+        retrieveServerUrl();
+        doRenewingServerUrl = true;
+    }
+
+    @Scheduled(fixedDelay = 5000)
+    public void renewServerUrl() {
+        if (doRenewingServerUrl) retrieveServerUrl();
+    }
+
+    private void retrieveServerUrl() {
+        try {
+            List<String> urls = discoveryClient.getInstances(name).stream()
+                    .map(i -> i.getUri().toString())
+                    .toList();
+
+            if (urls.isEmpty() || urls.contains(statUrl)) return;
+
+            statUrl = urls.get(random.nextInt(urls.size()));
+            restClient = RestClient.builder().baseUrl(statUrl).build();
+            log.info("Retrieved new stat server url: {}", statUrl);
+        } catch (Exception e) {
+            log.warn("Discovery server error: {}", e.getMessage());
+        }
+    }
+
+    @Override
+    public void hit(EventHitDto eventHitDto) {
+        try {
+            restClient
+                    .post()
+                    .uri("/hit")
+                    .body(eventHitDto)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (RestClientException e) {
+            log.warn("Failed call /hit on stat server: {}", e.getMessage());
+        }
+    }
+
+    @Override
+    public Collection<EventStatsResponseDto> stats(LocalDateTime start, LocalDateTime end, List<String> uris, Boolean unique) {
+        try {
+            UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString("/stats")
+                    .queryParam("start", start.format(formatter))
+                    .queryParam("end", end.format(formatter));
+            if (uris != null && !uris.isEmpty())
+                uriBuilder.queryParam("uris", String.join(",", uris));
+            if (unique != null)
+                uriBuilder.queryParam("unique", unique);
+            String uri = uriBuilder.build().toUriString();
+            return restClient
+                    .get()
+                    .uri(uri)
+                    .retrieve()
+                    .body(
+                            new ParameterizedTypeReference<Collection<EventStatsResponseDto>>() {
+                            }
+                    );
+        } catch (RestClientException e) {
+            log.error("Failed call /stats on stat server: {}", e.getMessage());
+            return Collections.emptyList();
+        }
+    }
+
+}
