@@ -3,10 +3,14 @@ package ru.practicum.ewm.client;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
+import org.springframework.retry.backoff.FixedBackOffPolicy;
+import org.springframework.retry.policy.MaxAttemptsRetryPolicy;
+import org.springframework.retry.support.RetryTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -52,16 +56,34 @@ public class RestStatClient implements StatClient {
     @EventListener(ApplicationReadyEvent.class)
     public void init() {
         if (name == null || name.isBlank()) return;
-        retrieveServerUrl();
+
+        FixedBackOffPolicy fixedBackOffPolicy = new FixedBackOffPolicy();
+        fixedBackOffPolicy.setBackOffPeriod(5000L);
+        MaxAttemptsRetryPolicy retryPolicy = new MaxAttemptsRetryPolicy();
+        retryPolicy.setMaxAttempts(10);
+        RetryTemplate retryTemplate = new RetryTemplate();
+        retryTemplate.setBackOffPolicy(fixedBackOffPolicy);
+        retryTemplate.setRetryPolicy(retryPolicy);
+
+        try {
+            ServiceInstance instance = retryTemplate.execute(retryContext -> {
+                List<ServiceInstance> instances =  discoveryClient.getInstances(name);
+                if (instances.isEmpty()) throw new RuntimeException("try again");
+                return instances.get(random.nextInt(instances.size()));
+            });
+            statUrl = instance.getUri().toString();
+            restClient = RestClient.builder().baseUrl(statUrl).build();
+            log.info("Retrieved init stat server url: {}", statUrl);
+        } catch (Exception e) {
+            log.warn("Discovery server error: {}", e.getMessage());
+        }
+
         doRenewingServerUrl = true;
     }
 
-    @Scheduled(fixedDelay = 5000)
+    @Scheduled(fixedDelay = 60000)
     public void renewServerUrl() {
-        if (doRenewingServerUrl) retrieveServerUrl();
-    }
-
-    private void retrieveServerUrl() {
+        if (!doRenewingServerUrl) return;
         try {
             List<String> urls = discoveryClient.getInstances(name).stream()
                     .map(i -> i.getUri().toString())
