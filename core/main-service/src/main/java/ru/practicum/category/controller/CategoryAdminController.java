@@ -8,8 +8,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.category.service.CategoryAdminService;
 import ru.practicum.category.dto.CategoryDto;
+import ru.practicum.category.service.CategoryAdminService;
 import ru.practicum.validation.CreateOrUpdateValidator;
 
 @RestController

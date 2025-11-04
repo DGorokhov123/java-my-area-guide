@@ -10,8 +10,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.NotFoundException;
-import ru.practicum.user.dto.NewUserRequestDto;
 import ru.practicum.user.controller.UserController;
+import ru.practicum.user.dto.NewUserRequestDto;
 import ru.practicum.user.dto.UserDto;
 import ru.practicum.user.service.UserService;
 

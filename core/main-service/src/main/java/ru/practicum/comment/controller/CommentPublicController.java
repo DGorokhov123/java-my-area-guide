@@ -9,8 +9,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.comment.dto.CommentDto;
-import ru.practicum.comment.service.CommentPublicService;
 import ru.practicum.comment.dto.CommentShortDto;
+import ru.practicum.comment.service.CommentPublicService;
 
 import java.util.List;
 
