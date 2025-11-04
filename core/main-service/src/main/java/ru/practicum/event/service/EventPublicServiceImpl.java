@@ -1,9 +1,7 @@
 package ru.practicum.event.service;
 
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
-import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -20,8 +18,8 @@ import ru.practicum.event.repository.ViewRepository;
 import ru.practicum.ewm.client.StatClient;
 import ru.practicum.exception.BadRequestException;
 import ru.practicum.exception.NotFoundException;
-import ru.practicum.request.ParticipationRequestStatus;
-import ru.practicum.request.RequestRepository;
+import ru.practicum.request.dto.ParticipationRequestStatus;
+import ru.practicum.request.repository.RequestRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -30,14 +28,13 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Transactional(readOnly = true)
 public class EventPublicServiceImpl implements EventPublicService {
 
-    StatClient statClient;
-    EventRepository eventRepository;
-    RequestRepository requestRepository;
-    ViewRepository viewRepository;
+    private final StatClient statClient;
+    private final EventRepository eventRepository;
+    private final RequestRepository requestRepository;
+    private final ViewRepository viewRepository;
 
     // Получение событий с возможностью фильтрации
     @Override

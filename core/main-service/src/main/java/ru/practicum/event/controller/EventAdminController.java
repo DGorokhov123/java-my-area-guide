@@ -4,9 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
-import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
-import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -21,14 +19,13 @@ import java.util.Collection;
 import java.util.List;
 
 @RestController
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequestMapping("/admin/events")
 @RequiredArgsConstructor
 @Slf4j
 @Validated
 public class EventAdminController {
 
-    EventAdminService eventAdminService;
+    private final EventAdminService eventAdminService;
 
     // Поиск событий
     @GetMapping

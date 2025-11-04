@@ -1,6 +1,6 @@
 package ru.practicum.validation;
 
-import ru.practicum.compilation.NewCompilationDto;
+import ru.practicum.compilation.dto.NewCompilationDto;
 
 import javax.validation.Validator;
 import java.util.Set;

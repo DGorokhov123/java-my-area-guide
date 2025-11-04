@@ -2,9 +2,7 @@ package ru.practicum.event.controller;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
-import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
-import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
@@ -19,13 +17,12 @@ import java.util.Collection;
 
 @RestController
 @RequestMapping("/users/{userId}/events")
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 @Slf4j
 @Validated
 public class EventPrivateController {
 
-    EventPrivateService eventPrivateService;
+    private final EventPrivateService eventPrivateService;
 
     // Добавление нового события
     @PostMapping

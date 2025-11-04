@@ -7,8 +7,8 @@ import org.springframework.data.jpa.domain.Specification;
 import ru.practicum.event.dto.EventAdminParams;
 import ru.practicum.event.dto.EventParams;
 import ru.practicum.event.model.Event;
-import ru.practicum.request.ParticipationRequestStatus;
-import ru.practicum.request.Request;
+import ru.practicum.request.dto.ParticipationRequestStatus;
+import ru.practicum.request.model.Request;
 
 import java.util.ArrayList;
 import java.util.List;

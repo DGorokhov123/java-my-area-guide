@@ -1,13 +1,14 @@
 package ru.practicum.event.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
-import lombok.*;
-import lombok.experimental.FieldDefaults;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import ru.practicum.validation.AtLeastOneNotNull;
 
 import java.time.LocalDateTime;
@@ -16,46 +17,35 @@ import java.time.LocalDateTime;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE)
 @AtLeastOneNotNull(fields = {"category", "title", "annotation", "description", "location", "paid",
         "participantLimit", "requestModeration", "stateAction", "eventDate"})
 public class UpdateEventDto {
 
-    @Nullable
     @Positive
-    Long category;
+    private Long category;
 
-    @Nullable
     @Size(min = 3, max = 120)
-    String title;
+    private String title;
 
-    @Nullable
     @Size(min = 20, max = 2000)
-    String annotation;
+    private String annotation;
 
-    @Nullable
     @Size(min = 20, max = 7000)
-    String description;
+    private String description;
 
-    @Nullable
-    LocationDto location;
+    private LocationDto location;
 
-    @Nullable
-    Boolean paid;
+    private Boolean paid;
 
-    @Nullable
     @PositiveOrZero
-    Long participantLimit;
+    private Long participantLimit;
 
-    @Nullable
-    Boolean requestModeration;
+    private Boolean requestModeration;
 
-    @Nullable
-    StateAction stateAction;
+    private StateAction stateAction;
 
-    @Nullable
     @Future(message = "Event should be in future")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    LocalDateTime eventDate;
+    private LocalDateTime eventDate;
 
 }

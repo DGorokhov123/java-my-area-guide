@@ -1,49 +1,50 @@
 package ru.practicum.event.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import lombok.*;
-import lombok.experimental.FieldDefaults;
-import ru.practicum.category.CategoryDto;
-import ru.practicum.comment.CommentShortDto;
-import ru.practicum.user.UserShortDto;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import ru.practicum.category.dto.CategoryDto;
+import ru.practicum.comment.dto.CommentShortDto;
+import ru.practicum.user.dto.UserShortDto;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
-@FieldDefaults(level = AccessLevel.PRIVATE)
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 public class EventFullDto {
 
-    Long id;
+    private Long id;
 
-    UserShortDto initiator;
-    CategoryDto category;
+    private UserShortDto initiator;
+    private CategoryDto category;
 
-    String title;
-    String annotation;
-    String description;
+    private String title;
+    private String annotation;
+    private String description;
 
-    State state;
+    private State state;
 
-    LocationDto location;
+    private LocationDto location;
 
-    Long participantLimit;
-    Boolean requestModeration;
-    Boolean paid;
+    private Long participantLimit;
+    private Boolean requestModeration;
+    private Boolean paid;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    LocalDateTime eventDate;
+    private LocalDateTime eventDate;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    LocalDateTime publishedOn;
+    private LocalDateTime publishedOn;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    LocalDateTime createdOn;
+    private LocalDateTime createdOn;
 
-    Long confirmedRequests;
-    Long views;
+    private Long confirmedRequests;
+    private Long views;
 
-    List<CommentShortDto> comments;
+    private List<CommentShortDto> comments;
 
 }

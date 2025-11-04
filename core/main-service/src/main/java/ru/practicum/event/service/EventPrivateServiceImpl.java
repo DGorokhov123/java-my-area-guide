@@ -1,15 +1,13 @@
 package ru.practicum.event.service;
 
-import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
-import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.category.Category;
-import ru.practicum.category.CategoryRepository;
+import ru.practicum.category.model.Category;
+import ru.practicum.category.repository.CategoryRepository;
 import ru.practicum.event.dto.*;
 import ru.practicum.event.mapper.EventMapper;
 import ru.practicum.event.mapper.LocationMapper;
@@ -18,10 +16,10 @@ import ru.practicum.event.repository.EventRepository;
 import ru.practicum.event.repository.ViewRepository;
 import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.NotFoundException;
-import ru.practicum.request.ParticipationRequestStatus;
-import ru.practicum.request.RequestRepository;
-import ru.practicum.user.User;
-import ru.practicum.user.UserRepository;
+import ru.practicum.request.dto.ParticipationRequestStatus;
+import ru.practicum.request.repository.RequestRepository;
+import ru.practicum.user.model.User;
+import ru.practicum.user.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -30,16 +28,15 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class EventPrivateServiceImpl implements EventPrivateService {
 
-    UserRepository userRepository;
-    CategoryRepository categoryRepository;
-    EventRepository eventRepository;
-    RequestRepository requestRepository;
-    ViewRepository viewRepository;
+    private final UserRepository userRepository;
+    private final CategoryRepository categoryRepository;
+    private final EventRepository eventRepository;
+    private final RequestRepository requestRepository;
+    private final ViewRepository viewRepository;
 
     // Добавление нового события
     @Override

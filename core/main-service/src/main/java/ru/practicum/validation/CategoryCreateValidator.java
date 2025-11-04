@@ -1,6 +1,6 @@
 package ru.practicum.validation;
 
-import ru.practicum.category.CategoryDto;
+import ru.practicum.category.dto.CategoryDto;
 
 import javax.validation.Validator;
 import java.util.Set;

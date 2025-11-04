@@ -1,34 +1,35 @@
 package ru.practicum.event.dto;
 
-import lombok.*;
-import lombok.experimental.FieldDefaults;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
 @Builder
-@FieldDefaults(level = AccessLevel.PRIVATE)
 @AllArgsConstructor
 @NoArgsConstructor
 public class EventParams {
 
-    String text;
+    private String text;
 
-    List<Long> categories;
+    private List<Long> categories;
 
-    Boolean paid;
+    private Boolean paid;
 
-    LocalDateTime rangeStart;
+    private LocalDateTime rangeStart;
 
-    LocalDateTime rangeEnd;
+    private LocalDateTime rangeEnd;
 
-    Boolean onlyAvailable;
+    private Boolean onlyAvailable;
 
-    EventSort eventSort;
+    private EventSort eventSort;
 
-    Long from;
+    private Long from;
 
-    Long size;
+    private Long size;
 
 }

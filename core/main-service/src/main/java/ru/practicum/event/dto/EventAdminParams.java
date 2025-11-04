@@ -1,30 +1,31 @@
 package ru.practicum.event.dto;
 
-import lombok.*;
-import lombok.experimental.FieldDefaults;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
 @Builder
-@FieldDefaults(level = AccessLevel.PRIVATE)
 @AllArgsConstructor
 @NoArgsConstructor
 public class EventAdminParams {
 
-    List<Long> users;
+    private List<Long> users;
 
-    List<State> states;
+    private List<State> states;
 
-    List<Long> categories;
+    private List<Long> categories;
 
-    LocalDateTime rangeStart;
+    private LocalDateTime rangeStart;
 
-    LocalDateTime rangeEnd;
+    private LocalDateTime rangeEnd;
 
-    Long from;
+    private Long from;
 
-    Long size;
+    private Long size;
 
 }

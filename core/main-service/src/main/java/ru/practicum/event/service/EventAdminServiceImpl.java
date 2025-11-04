@@ -1,14 +1,12 @@
 package ru.practicum.event.service;
 
-import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
-import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.category.Category;
-import ru.practicum.category.CategoryRepository;
+import ru.practicum.category.model.Category;
+import ru.practicum.category.repository.CategoryRepository;
 import ru.practicum.event.dto.*;
 import ru.practicum.event.mapper.EventMapper;
 import ru.practicum.event.mapper.LocationMapper;
@@ -18,8 +16,8 @@ import ru.practicum.event.repository.JpaSpecifications;
 import ru.practicum.event.repository.ViewRepository;
 import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.NotFoundException;
-import ru.practicum.request.ParticipationRequestStatus;
-import ru.practicum.request.RequestRepository;
+import ru.practicum.request.dto.ParticipationRequestStatus;
+import ru.practicum.request.repository.RequestRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -29,14 +27,13 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Transactional(readOnly = true)
 public class EventAdminServiceImpl implements EventAdminService {
 
-    EventRepository eventRepository;
-    CategoryRepository categoryRepository;
-    RequestRepository requestRepository;
-    ViewRepository viewRepository;
+    private final EventRepository eventRepository;
+    private final CategoryRepository categoryRepository;
+    private final RequestRepository requestRepository;
+    private final ViewRepository viewRepository;
 
     // Поиск событий
     @Override
