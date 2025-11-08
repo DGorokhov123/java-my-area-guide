@@ -4,21 +4,19 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.compilation.dto.CompilationDto;
-import ru.practicum.compilation.dto.NewCompilationDto;
-import ru.practicum.compilation.dto.UpdateCompilationDto;
-import ru.practicum.compilation.mapper.CompilationMapper;
-import ru.practicum.compilation.model.Compilation;
-import ru.practicum.compilation.repository.CompilationRepository;
-import ru.practicum.event.model.Event;
-import ru.practicum.event.repository.EventRepository;
+import ru.practicum.compilation.dal.Compilation;
+import ru.practicum.compilation.dal.CompilationRepository;
+import ru.practicum.dto.compilation.CompilationDto;
+import ru.practicum.dto.compilation.NewCompilationDto;
+import ru.practicum.dto.compilation.UpdateCompilationDto;
+import ru.practicum.event.dal.Event;
+import ru.practicum.event.dal.EventRepository;
 import ru.practicum.exception.NotFoundException;
 
 import java.util.HashSet;
 import java.util.Set;
 
 @Service
-@Transactional
 @RequiredArgsConstructor
 @Slf4j
 public class CompilationAdminServiceImpl implements CompilationAdminService {
@@ -27,6 +25,7 @@ public class CompilationAdminServiceImpl implements CompilationAdminService {
     private final EventRepository eventRepository;
 
     @Override
+    @Transactional
     public CompilationDto createCompilation(NewCompilationDto request) {
         log.info("createCompilation - invoked");
         Set<Event> events;
@@ -41,16 +40,19 @@ public class CompilationAdminServiceImpl implements CompilationAdminService {
     }
 
     @Override
-    public void deleteCompilation(Long compId) {
+    @Transactional
+    public String deleteCompilation(Long compId) {
         log.info("deleteCompilation(- invoked");
         if (!compilationRepository.existsById(compId)) {
             throw new NotFoundException("Compilation Not Found");
         }
         log.info("Result: compilation with id {} deleted ", compId);
         compilationRepository.deleteById(compId);
+        return "Compilation deleted: " + compId;
     }
 
     @Override
+    @Transactional
     public CompilationDto updateCompilation(Long compId, UpdateCompilationDto updateCompilationDto) {
         log.info("updateCompilation - invoked");
         Compilation compilation = compilationRepository.findById(compId)
@@ -69,4 +71,5 @@ public class CompilationAdminServiceImpl implements CompilationAdminService {
         log.info("Result: compilation with id {} updated ", compId);
         return CompilationMapper.toCompilationDto(updatedCompilation);
     }
+
 }

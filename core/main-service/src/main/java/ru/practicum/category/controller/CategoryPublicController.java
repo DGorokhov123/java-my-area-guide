@@ -1,40 +1,29 @@
 package ru.practicum.category.controller;
 
-import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
-import ru.practicum.category.dto.CategoryDto;
+import org.springframework.web.bind.annotation.RestController;
+import ru.practicum.api.category.CategoryPublicApi;
 import ru.practicum.category.service.CategoryPublicService;
+import ru.practicum.dto.category.CategoryDto;
 
-import java.util.List;
+import java.util.Collection;
 
 @RestController
 @RequiredArgsConstructor
 @Validated
-@RequestMapping(path = "/categories")
-@Slf4j
-public class CategoryPublicController {
+public class CategoryPublicController implements CategoryPublicApi {
 
-    private final CategoryPublicService service;
+    private final CategoryPublicService categoryPublicService;
 
-    @GetMapping
-    public ResponseEntity<List<CategoryDto>> readAllCategories(
-            @RequestParam(defaultValue = "0") @PositiveOrZero int from,
-            @RequestParam(defaultValue = "10") @Positive int size
-    ) {
-        log.info("Calling the POST request to - /categories - endpoint");
-        return ResponseEntity.ok(service.readAllCategories(from, size));
+    @Override
+    public Collection<CategoryDto> readAllCategories(int from, int size) {
+        return categoryPublicService.readAllCategories(from, size);
     }
 
-    @GetMapping("/{catId}")
-    public ResponseEntity<CategoryDto> readCategoryById(
-            @PathVariable Long catId
-    ) {
-        log.info("Calling the GET request to - /categories/{catId} - endpoint");
-        return ResponseEntity.ok(service.readCategoryById(catId));
+    @Override
+    public CategoryDto readCategoryById(Long catId) {
+        return categoryPublicService.readCategoryById(catId);
     }
+
 }

@@ -7,26 +7,25 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.comment.dto.CommentDto;
-import ru.practicum.comment.mapper.CommentMapper;
-import ru.practicum.comment.model.Comment;
-import ru.practicum.comment.repository.CommentRepository;
+import ru.practicum.comment.dal.Comment;
+import ru.practicum.comment.dal.CommentRepository;
+import ru.practicum.dto.comment.CommentDto;
 import ru.practicum.exception.NotFoundException;
-import ru.practicum.user.repository.UserRepository;
+import ru.practicum.user.dal.UserRepository;
 
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@Transactional
 public class CommentAdminServiceImpl implements CommentAdminService {
 
     private final CommentRepository repository;
     private final UserRepository userRepository;
 
     @Override
-    public void delete(Long comId) {
+    @Transactional
+    public String delete(Long comId) {
         log.info("admin delete - invoked");
         if (!repository.existsById(comId)) {
             log.error("User with id = {} not exist", comId);
@@ -34,9 +33,11 @@ public class CommentAdminServiceImpl implements CommentAdminService {
         }
         log.info("Result: comment with id = {} deleted", comId);
         repository.deleteById(comId);
+        return "deleted comment " + comId;
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<CommentDto> search(String text, int from, int size) {
         log.info("admin search - invoked");
         Pageable pageable = PageRequest.of(from / size, size);
@@ -47,6 +48,7 @@ public class CommentAdminServiceImpl implements CommentAdminService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<CommentDto> findAllByUserId(Long userId, int from, int size) {
         log.info("admin findAllByUserId - invoked");
         if (!userRepository.existsById(userId)) {
@@ -61,6 +63,7 @@ public class CommentAdminServiceImpl implements CommentAdminService {
     }
 
     @Override
+    @Transactional
     public CommentDto approveComment(Long comId) {
         log.info("approveComment - invoked");
         Comment comment = repository.findById(comId)
@@ -72,6 +75,7 @@ public class CommentAdminServiceImpl implements CommentAdminService {
     }
 
     @Override
+    @Transactional
     public CommentDto rejectComment(Long comId) {
         log.info("rejectComment - invoked");
         Comment comment = repository.findById(comId).orElseThrow(() -> new NotFoundException("Comment not found"));
@@ -80,4 +84,5 @@ public class CommentAdminServiceImpl implements CommentAdminService {
         log.info("Result: comment with id = {} rejected", comId);
         return CommentMapper.toCommentDto(comment);
     }
+
 }

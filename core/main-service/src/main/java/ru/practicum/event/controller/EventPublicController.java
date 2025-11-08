@@ -1,15 +1,14 @@
 package ru.practicum.event.controller;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.*;
-import ru.practicum.event.dto.EventFullDto;
-import ru.practicum.event.dto.EventParams;
-import ru.practicum.event.dto.EventShortDto;
-import ru.practicum.event.dto.EventSort;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.RestController;
+import ru.practicum.api.event.EventPublicApi;
+import ru.practicum.dto.event.EventFullDto;
+import ru.practicum.dto.event.EventParams;
+import ru.practicum.dto.event.EventShortDto;
+import ru.practicum.dto.event.EventSort;
 import ru.practicum.event.service.EventPublicService;
 
 import java.time.LocalDateTime;
@@ -17,26 +16,17 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/events")
-@Slf4j
-public class EventPublicController {
+@Validated
+public class EventPublicController implements EventPublicApi {
 
     private final EventPublicService eventPublicService;
 
     // Получение событий с возможностью фильтрации
-    @GetMapping
-    List<EventShortDto> getAllEventsByParams(
-            @RequestParam(required = false) String text,
-            @RequestParam(required = false) List<Long> categories,
-            @RequestParam(required = false) Boolean paid,
-            @RequestParam(required = false) @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeStart,
-            @RequestParam(required = false) @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeEnd,
-            @RequestParam(defaultValue = "false") Boolean onlyAvailable,
-            @RequestParam(defaultValue = "EVENT_DATE") EventSort eventSort,
-            @RequestParam(defaultValue = "0") Long from,
-            @RequestParam(defaultValue = "10") Long size,
-            HttpServletRequest request
-    ) {
+    @Override
+    public List<EventShortDto> getAllEventsByParams(String text, List<Long> categories, Boolean paid,
+                                                    LocalDateTime rangeStart, LocalDateTime rangeEnd,
+                                                    Boolean onlyAvailable, EventSort eventSort, Long from,
+                                                    Long size, HttpServletRequest request) {
         EventParams params = EventParams.builder()
                 .text(text)
                 .categories(categories)
@@ -48,17 +38,12 @@ public class EventPublicController {
                 .from(from)
                 .size(size)
                 .build();
-        log.info("Calling to endpoint /events GetMapping for params: " + params.toString());
         return eventPublicService.getAllEventsByParams(params, request);
     }
 
     // Получение подробной информации об опубликованном событии по его идентификатору
-    @GetMapping("/{id}")
-    EventFullDto getInformationAboutEventByEventId(
-            @PathVariable @Positive Long id,
-            HttpServletRequest request
-    ) {
-        log.info("Calling to endpoint /events/{id} GetMapping for eventId: " + id);
+    @Override
+    public EventFullDto getInformationAboutEventByEventId(Long id, HttpServletRequest request) {
         return eventPublicService.getEventById(id, request);
     }
 

@@ -1,13 +1,11 @@
 package ru.practicum.user.controller;
 
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
-import ru.practicum.user.dto.NewUserRequestDto;
-import ru.practicum.user.dto.UserDto;
+import org.springframework.web.bind.annotation.RestController;
+import ru.practicum.api.user.UserApi;
+import ru.practicum.dto.user.NewUserRequestDto;
+import ru.practicum.dto.user.UserDto;
 import ru.practicum.user.service.UserService;
 
 import java.util.Collection;
@@ -16,38 +14,27 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @Validated
-public class UserController {
+public class UserController implements UserApi {
 
     private final UserService userService;
 
     // MODIFY OPS
 
-    @PostMapping("/admin/users")
-    @ResponseStatus(HttpStatus.CREATED)
-    public UserDto createUser(
-            @RequestBody @Valid NewUserRequestDto newUserRequestDto
-    ) {
+    @Override
+    public UserDto createUser(NewUserRequestDto newUserRequestDto) {
         return userService.create(newUserRequestDto);
     }
 
-    @DeleteMapping("/admin/users/{userId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteUser(
-            @PathVariable @Positive(message = "User Id not valid") Long userId
-    ) {
+    @Override
+    public void deleteUser(Long userId) {
         userService.delete(userId);
     }
 
     // GET COLLECTION
 
-    @GetMapping("/admin/users")
-    public Collection<UserDto> getUsers(
-            @RequestParam(required = false) List<Long> ids,
-            @RequestParam(defaultValue = "0") Integer from,
-            @RequestParam(defaultValue = "10") Integer size
-    ) {
+    @Override
+    public Collection<UserDto> getUsers(List<Long> ids, Integer from, Integer size) {
         return userService.findByIdListWithOffsetAndLimit(ids, from, size);
     }
-
 
 }

@@ -1,44 +1,29 @@
 package ru.practicum.compilation.controller;
 
-import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
-import ru.practicum.compilation.dto.CompilationDto;
+import org.springframework.web.bind.annotation.RestController;
+import ru.practicum.api.compilation.CompilationPublicApi;
 import ru.practicum.compilation.service.CompilationPublicService;
+import ru.practicum.dto.compilation.CompilationDto;
 
-import java.util.List;
+import java.util.Collection;
 
 @RestController
 @Validated
-@RequestMapping("/compilations")
 @RequiredArgsConstructor
-@Slf4j
-public class CompilationPublicController {
+public class CompilationPublicController implements CompilationPublicApi {
 
     private final CompilationPublicService compilationPublicService;
 
-    @GetMapping
-    public ResponseEntity<List<CompilationDto>> getCompilation(
-            @RequestParam(required = false) Boolean pinned,
-            @RequestParam(defaultValue = "0") @PositiveOrZero int from,
-            @RequestParam(defaultValue = "10") @Positive int size
-    ) {
-        log.info("Calling the GET request to /compilations endpoint");
-        List<CompilationDto> list = compilationPublicService.readAllCompilations(pinned, from, size);
-        return ResponseEntity.ok(list);
+    @Override
+    public Collection<CompilationDto> getCompilation(Boolean pinned, int from, int size) {
+        return compilationPublicService.readAllCompilations(pinned, from, size);
     }
 
-    @GetMapping("/{compId}")
-    public ResponseEntity<CompilationDto> getCompilationById(
-            @PathVariable Long compId
-    ) {
-        log.info("Calling the GET request to /compilations/{compId} endpoint");
-        CompilationDto response = compilationPublicService.readCompilationById(compId);
-        return ResponseEntity.ok(response);
+    @Override
+    public CompilationDto getCompilationById(Long compId) {
+        return compilationPublicService.readCompilationById(compId);
     }
 
 }

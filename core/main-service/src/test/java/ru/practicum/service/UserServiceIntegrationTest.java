@@ -11,10 +11,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.NotFoundException;
-import ru.practicum.user.dto.NewUserRequestDto;
-import ru.practicum.user.dto.UserDto;
-import ru.practicum.user.model.User;
-import ru.practicum.user.repository.UserRepository;
+import ru.practicum.dto.user.NewUserRequestDto;
+import ru.practicum.dto.user.UserDto;
+import ru.practicum.user.dal.User;
+import ru.practicum.user.dal.UserRepository;
 import ru.practicum.user.service.UserService;
 
 import java.util.Arrays;

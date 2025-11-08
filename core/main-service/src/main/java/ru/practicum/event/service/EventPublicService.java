@@ -1,9 +1,9 @@
 package ru.practicum.event.service;
 
 import jakarta.servlet.http.HttpServletRequest;
-import ru.practicum.event.dto.EventFullDto;
-import ru.practicum.event.dto.EventParams;
-import ru.practicum.event.dto.EventShortDto;
+import ru.practicum.dto.event.EventFullDto;
+import ru.practicum.dto.event.EventParams;
+import ru.practicum.dto.event.EventShortDto;
 
 import java.util.List;
 

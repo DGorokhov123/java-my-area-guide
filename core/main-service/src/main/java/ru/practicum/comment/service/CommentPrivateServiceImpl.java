@@ -4,18 +4,17 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.comment.dto.CommentCreateDto;
-import ru.practicum.comment.dto.CommentDto;
-import ru.practicum.comment.mapper.CommentMapper;
-import ru.practicum.comment.model.Comment;
-import ru.practicum.comment.repository.CommentRepository;
-import ru.practicum.event.dto.State;
-import ru.practicum.event.model.Event;
-import ru.practicum.event.repository.EventRepository;
+import ru.practicum.dto.comment.CommentCreateDto;
+import ru.practicum.dto.comment.CommentDto;
+import ru.practicum.comment.dal.Comment;
+import ru.practicum.comment.dal.CommentRepository;
+import ru.practicum.dto.event.State;
+import ru.practicum.event.dal.Event;
+import ru.practicum.event.dal.EventRepository;
 import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.NotFoundException;
-import ru.practicum.user.model.User;
-import ru.practicum.user.repository.UserRepository;
+import ru.practicum.user.dal.User;
+import ru.practicum.user.dal.UserRepository;
 
 import java.time.LocalDateTime;
 
@@ -56,7 +55,7 @@ public class CommentPrivateServiceImpl implements CommentPrivateService {
     }
 
     @Override
-    public void deleteComment(Long userId, Long comId) {
+    public String deleteComment(Long userId, Long comId) {
         log.info("deleteComment - invoked");
         Comment comment = repository.findById(comId)
                 .orElseThrow(() -> {
@@ -69,6 +68,7 @@ public class CommentPrivateServiceImpl implements CommentPrivateService {
         }
         log.info("Result: comment with id = {} - deleted", comId);
         repository.deleteById(comId);
+        return "Comment deleted by user: " + comId;
     }
 
     @Override

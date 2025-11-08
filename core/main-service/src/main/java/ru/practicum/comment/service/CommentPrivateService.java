@@ -1,13 +1,14 @@
 package ru.practicum.comment.service;
 
-import ru.practicum.comment.dto.CommentCreateDto;
-import ru.practicum.comment.dto.CommentDto;
+import ru.practicum.dto.comment.CommentCreateDto;
+import ru.practicum.dto.comment.CommentDto;
 
 public interface CommentPrivateService {
 
     CommentDto createComment(Long userId, Long eventId, CommentCreateDto commentDto);
 
-    void deleteComment(Long userId, Long comId);
+    String deleteComment(Long userId, Long comId);
 
     CommentDto patchComment(Long userId, Long comId, CommentCreateDto commentCreateDto);
+
 }

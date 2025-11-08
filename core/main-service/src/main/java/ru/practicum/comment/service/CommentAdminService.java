@@ -1,12 +1,12 @@
 package ru.practicum.comment.service;
 
-import ru.practicum.comment.dto.CommentDto;
+import ru.practicum.dto.comment.CommentDto;
 
 import java.util.List;
 
 public interface CommentAdminService {
 
-    void delete(Long comId);
+    String delete(Long comId);
 
     List<CommentDto> search(String text, int from, int size);
 
@@ -15,4 +15,5 @@ public interface CommentAdminService {
     CommentDto approveComment(Long comId);
 
     CommentDto rejectComment(Long comId);
+
 }

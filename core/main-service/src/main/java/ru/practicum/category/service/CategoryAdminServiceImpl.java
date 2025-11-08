@@ -4,25 +4,23 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.category.dto.CategoryDto;
-import ru.practicum.category.mapper.CategoryMapper;
-import ru.practicum.category.model.Category;
-import ru.practicum.category.repository.CategoryRepository;
-import ru.practicum.event.repository.EventRepository;
+import ru.practicum.category.dal.Category;
+import ru.practicum.category.dal.CategoryRepository;
+import ru.practicum.dto.category.CategoryDto;
+import ru.practicum.event.dal.EventRepository;
 import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.NotFoundException;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@Transactional(readOnly = false)
 public class CategoryAdminServiceImpl implements CategoryAdminService {
 
     private final CategoryRepository categoryRepository;
-
     private final EventRepository eventRepository;
 
     @Override
+    @Transactional
     public CategoryDto createCategory(CategoryDto requestCategory) {
         log.info("createCategories - invoked");
         if (categoryRepository.existsByName(requestCategory.getName())) {
@@ -35,7 +33,8 @@ public class CategoryAdminServiceImpl implements CategoryAdminService {
     }
 
     @Override
-    public void deleteCategory(Long catId) {
+    @Transactional
+    public String deleteCategory(Long catId) {
         log.info("deleteCategories - invoked");
         if (!categoryRepository.existsById(catId)) {
             log.error("Category with this id does not exist {}", catId);
@@ -46,9 +45,11 @@ public class CategoryAdminServiceImpl implements CategoryAdminService {
         }
         log.info("Result: category with id - {} - deleted", catId);
         categoryRepository.deleteById(catId);
+        return "Category deleted: " + catId;
     }
 
     @Override
+    @Transactional
     public CategoryDto updateCategory(Long catId, CategoryDto categoryDto) {
         log.info("updateCategories - invoked");
         Category category = categoryRepository.findById(catId).orElseThrow(()
@@ -62,4 +63,5 @@ public class CategoryAdminServiceImpl implements CategoryAdminService {
         log.info("Result: category - {} updated", category.getName());
         return CategoryMapper.toCategoryDto(category);
     }
+
 }

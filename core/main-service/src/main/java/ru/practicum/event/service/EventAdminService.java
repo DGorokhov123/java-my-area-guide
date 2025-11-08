@@ -1,8 +1,8 @@
 package ru.practicum.event.service;
 
-import ru.practicum.event.dto.EventAdminParams;
-import ru.practicum.event.dto.EventFullDto;
-import ru.practicum.event.dto.UpdateEventDto;
+import ru.practicum.dto.event.EventAdminParams;
+import ru.practicum.dto.event.EventFullDto;
+import ru.practicum.dto.event.UpdateEventDto;
 
 import java.util.List;
 

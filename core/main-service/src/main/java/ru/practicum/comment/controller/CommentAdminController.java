@@ -1,63 +1,44 @@
 package ru.practicum.comment.controller;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import ru.practicum.comment.dto.CommentDto;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.RestController;
+import ru.practicum.api.comment.CommentAdminApi;
 import ru.practicum.comment.service.CommentAdminService;
+import ru.practicum.dto.comment.CommentDto;
 
-import java.util.List;
+import java.util.Collection;
 
 @RestController
-@RequestMapping(path = "/admin")
 @RequiredArgsConstructor
-@Slf4j
-public class CommentAdminController {
+@Validated
+public class CommentAdminController implements CommentAdminApi {
 
-    private final CommentAdminService service;
+    private final CommentAdminService commentAdminService;
 
-    @GetMapping("/comments/search")
-    public ResponseEntity<List<CommentDto>> search(@RequestParam @NotBlank String text,
-                                                   @RequestParam(defaultValue = "0") int from,
-                                                   @RequestParam(defaultValue = "10") int size) {
-        log.info("Calling the GET request to /admin/comment/search endpoint");
-        return ResponseEntity.ok(service.search(text, from, size));
+    @Override
+    public Collection<CommentDto> search(String text, int from, int size) {
+        return commentAdminService.search(text, from, size);
     }
 
-    @GetMapping("users/{userId}/comments")
-    public ResponseEntity<List<CommentDto>> get(@PathVariable @Positive Long userId,
-                                                @RequestParam(defaultValue = "0") int from,
-                                                @RequestParam(defaultValue = "10") int size) {
-        log.info("Calling the GET request to admin/users/{userId}/comment endpoint");
-        return ResponseEntity.ok(service.findAllByUserId(userId, from, size));
+    @Override
+    public Collection<CommentDto> get(Long userId, int from, int size) {
+        return commentAdminService.findAllByUserId(userId, from, size);
     }
 
-    @DeleteMapping("comments/{comId}")
-    public ResponseEntity<String> delete(@PathVariable @Positive Long comId) {
-        log.info("Calling the GET request to admin/comment/{comId} endpoint");
-        service.delete(comId);
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    @Override
+    public String delete(Long comId) {
+        return commentAdminService.delete(comId);
     }
 
-    @PatchMapping("/comments/{comId}/approve")
-    public ResponseEntity<CommentDto> approveComment(@PathVariable @Positive Long comId) {
-        log.info("Calling the PATCH request to /admin/comment/{comId}/approve endpoint");
-        CommentDto commentDto = service.approveComment(comId);
-        return ResponseEntity
-                .status(HttpStatus.OK)
-                .body(commentDto);
+    @Override
+    public CommentDto approveComment(Long comId) {
+        return commentAdminService.approveComment(comId);
     }
 
-    @PatchMapping("/comments/{comId}/reject")
-    public ResponseEntity<CommentDto> rejectComment(@PathVariable @Positive Long comId) {
-        log.info("Calling the PATCH request to /admin/comment/{comId}/reject endpoint");
-        CommentDto commentDto = service.rejectComment(comId);
-        return ResponseEntity
-                .status(HttpStatus.OK)
-                .body(commentDto);
+    @Override
+    public CommentDto rejectComment(Long comId) {
+        return commentAdminService.rejectComment(comId);
     }
+
 }

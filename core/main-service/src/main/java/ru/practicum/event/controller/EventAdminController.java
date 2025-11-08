@@ -1,17 +1,13 @@
 package ru.practicum.event.controller;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
-import ru.practicum.event.dto.EventAdminParams;
-import ru.practicum.event.dto.EventFullDto;
-import ru.practicum.event.dto.State;
-import ru.practicum.event.dto.UpdateEventDto;
+import org.springframework.web.bind.annotation.RestController;
+import ru.practicum.api.event.EventAdminApi;
+import ru.practicum.dto.event.EventAdminParams;
+import ru.practicum.dto.event.EventFullDto;
+import ru.practicum.dto.event.State;
+import ru.practicum.dto.event.UpdateEventDto;
 import ru.practicum.event.service.EventAdminService;
 
 import java.time.LocalDateTime;
@@ -19,25 +15,16 @@ import java.util.Collection;
 import java.util.List;
 
 @RestController
-@RequestMapping("/admin/events")
 @RequiredArgsConstructor
-@Slf4j
 @Validated
-public class EventAdminController {
+public class EventAdminController implements EventAdminApi {
 
     private final EventAdminService eventAdminService;
 
     // Поиск событий
-    @GetMapping
-    Collection<EventFullDto> getAllEventsByParams(
-            @RequestParam(required = false) List<Long> users,
-            @RequestParam(required = false) List<State> states,
-            @RequestParam(required = false) List<Long> categories,
-            @RequestParam(required = false) @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeStart,
-            @RequestParam(required = false) @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeEnd,
-            @RequestParam(defaultValue = "0") @PositiveOrZero Long from,
-            @RequestParam(defaultValue = "10") @Positive Long size
-    ) {
+    @Override
+    public Collection<EventFullDto> getAllEventsByParams(List<Long> users, List<State> states, List<Long> categories,
+                                                         LocalDateTime rangeStart, LocalDateTime rangeEnd, Long from, Long size) {
         EventAdminParams params = EventAdminParams.builder()
                 .users(users)
                 .states(states)
@@ -47,19 +34,12 @@ public class EventAdminController {
                 .from(from)
                 .size(size)
                 .build();
-
-        log.info("Calling to endpoint /admin/events GetMapping for params: " + params.toString());
         return eventAdminService.getAllEventsByParams(params);
     }
 
     // Редактирование данных события и его статуса (отклонение/публикация).
-    @PatchMapping("/{eventId}")
-    EventFullDto updateEventByAdmin(
-            @PathVariable Long eventId,
-            @RequestBody @Valid UpdateEventDto updateEventDto
-    ) {
-        log.info("Calling to endpoint /admin/events/{eventId} PatchMapping for eventId: " + eventId + "."
-                + " UpdateEvent: " + updateEventDto.toString());
+    @Override
+    public EventFullDto updateEventByAdmin(Long eventId, UpdateEventDto updateEventDto) {
         return eventAdminService.updateEventByAdmin(eventId, updateEventDto);
     }
 

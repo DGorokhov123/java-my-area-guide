@@ -1,7 +1,7 @@
 package ru.practicum.comment.service;
 
-import ru.practicum.comment.dto.CommentDto;
-import ru.practicum.comment.dto.CommentShortDto;
+import ru.practicum.dto.comment.CommentDto;
+import ru.practicum.dto.comment.CommentShortDto;
 
 import java.util.List;
 
@@ -12,4 +12,5 @@ public interface CommentPublicService {
     List<CommentShortDto> getCommentsByEvent(Long eventId, int from, int size);
 
     CommentDto getCommentByEventAndCommentId(Long eventId, Long commentId);
+
 }

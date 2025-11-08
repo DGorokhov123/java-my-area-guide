@@ -1,12 +1,12 @@
 package ru.practicum.category.service;
 
-import ru.practicum.category.dto.CategoryDto;
+import ru.practicum.dto.category.CategoryDto;
 
 public interface CategoryAdminService {
 
     CategoryDto createCategory(CategoryDto requestCategory);
 
-    void deleteCategory(Long catId);
+    String deleteCategory(Long catId);
 
     CategoryDto updateCategory(Long catId, CategoryDto categoryDto);
 

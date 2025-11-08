@@ -6,12 +6,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.comment.dto.CommentDto;
-import ru.practicum.comment.dto.CommentShortDto;
-import ru.practicum.comment.mapper.CommentMapper;
-import ru.practicum.comment.model.Comment;
-import ru.practicum.comment.repository.CommentRepository;
-import ru.practicum.event.repository.EventRepository;
+import ru.practicum.dto.comment.CommentDto;
+import ru.practicum.dto.comment.CommentShortDto;
+import ru.practicum.comment.dal.Comment;
+import ru.practicum.comment.dal.CommentRepository;
+import ru.practicum.event.dal.EventRepository;
 import ru.practicum.exception.ForbiddenException;
 import ru.practicum.exception.NotFoundException;
 
@@ -21,7 +20,6 @@ import java.util.stream.Collectors;
 import static ru.practicum.util.Util.createPageRequestAsc;
 
 @Service
-@Transactional(readOnly = true)
 @RequiredArgsConstructor
 @Slf4j
 public class CommentPublicServiceImpl implements CommentPublicService {
@@ -30,6 +28,7 @@ public class CommentPublicServiceImpl implements CommentPublicService {
     private final EventRepository eventRepository;
 
     @Override
+    @Transactional(readOnly = true)
     public CommentDto getComment(Long comId) {
         log.info("getComment - invoked");
         Comment comment = repository.findById(comId)
@@ -46,6 +45,7 @@ public class CommentPublicServiceImpl implements CommentPublicService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<CommentShortDto> getCommentsByEvent(Long eventId, int from, int size) {
         log.info("getCommentsByEvent - invoked");
         if (!eventRepository.existsById(eventId)) {
@@ -63,6 +63,7 @@ public class CommentPublicServiceImpl implements CommentPublicService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public CommentDto getCommentByEventAndCommentId(Long eventId, Long commentId) {
         log.info("getCommentByEventAndCommentId - invoked");
         Comment comment = repository.findById(commentId)
@@ -81,4 +82,5 @@ public class CommentPublicServiceImpl implements CommentPublicService {
         log.info("Result: comment with eventId= {} and commentId= {}", eventId, commentId);
         return CommentMapper.toCommentDto(comment);
     }
+
 }

@@ -11,8 +11,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.NotFoundException;
 import ru.practicum.user.controller.UserController;
-import ru.practicum.user.dto.NewUserRequestDto;
-import ru.practicum.user.dto.UserDto;
+import ru.practicum.dto.user.NewUserRequestDto;
+import ru.practicum.dto.user.UserDto;
 import ru.practicum.user.service.UserService;
 
 import java.util.Arrays;

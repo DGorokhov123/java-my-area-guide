@@ -5,10 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.category.dto.CategoryDto;
-import ru.practicum.category.mapper.CategoryMapper;
-import ru.practicum.category.model.Category;
-import ru.practicum.category.repository.CategoryRepository;
+import ru.practicum.dto.category.CategoryDto;
+import ru.practicum.category.dal.Category;
+import ru.practicum.category.dal.CategoryRepository;
 import ru.practicum.exception.NotFoundException;
 
 import java.util.List;
@@ -17,13 +16,13 @@ import static ru.practicum.util.Util.createPageRequestAsc;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 @Slf4j
 public class CategoryPublicServiceImpl implements CategoryPublicService {
 
     private final CategoryRepository repository;
 
     @Override
+    @Transactional(readOnly = true)
     public List<CategoryDto> readAllCategories(Integer from, Integer size) {
         log.info("readAllCategories - invoked");
         Page<Category> page = repository.findAll(createPageRequestAsc(from, size));
@@ -33,6 +32,7 @@ public class CategoryPublicServiceImpl implements CategoryPublicService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public CategoryDto readCategoryById(Long catId) {
         log.info("readCategoryById - invoked");
         Category category = repository.findById(catId).orElseThrow(() -> {
