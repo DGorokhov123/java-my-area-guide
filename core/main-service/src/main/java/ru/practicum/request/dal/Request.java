@@ -6,7 +6,6 @@ import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 import ru.practicum.dto.request.ParticipationRequestStatus;
 import ru.practicum.event.dal.Event;
-import ru.practicum.user.dal.User;
 
 import java.time.LocalDateTime;
 
@@ -31,10 +30,8 @@ public class Request {
     @Column(name = "id")
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "requester_id", nullable = false)
-    @OnDelete(action = OnDeleteAction.RESTRICT)
-    private User requester;
+    @Column(name = "requester_id", nullable = false)
+    private Long requesterId;
 
     @ManyToOne
     @JoinColumn(name = "event_id", nullable = false)

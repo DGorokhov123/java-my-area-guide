@@ -1,21 +1,21 @@
 package ru.practicum.request.service;
 
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.client.UserClient;
 import ru.practicum.dto.event.State;
-import ru.practicum.event.dal.Event;
-import ru.practicum.event.dal.EventRepository;
-import ru.practicum.exception.ConflictException;
-import ru.practicum.exception.NotFoundException;
 import ru.practicum.dto.request.EventRequestStatusUpdateRequestDto;
 import ru.practicum.dto.request.EventRequestStatusUpdateResultDto;
 import ru.practicum.dto.request.ParticipationRequestDto;
 import ru.practicum.dto.request.ParticipationRequestStatus;
+import ru.practicum.event.dal.Event;
+import ru.practicum.event.dal.EventRepository;
+import ru.practicum.exception.ConflictException;
+import ru.practicum.exception.NotFoundException;
 import ru.practicum.request.dal.Request;
 import ru.practicum.request.dal.RequestRepository;
-import ru.practicum.user.dal.User;
-import ru.practicum.user.dal.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -25,20 +25,23 @@ import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class RequestService {
 
     private final RequestRepository requestRepository;
-    private final UserRepository userRepository;
     private final EventRepository eventRepository;
+
+    private final UserClient userClient;
 
     // ЗАЯВКИ ТЕКУЩЕГО ПОЛЬЗОВАТЕЛЯ
 
     // Добавление запроса от текущего пользователя на участие в событии
-    @Transactional(readOnly = false)
+    @Transactional
     public ParticipationRequestDto addRequest(Long userId, Long eventId) {
-        User requester = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("User with id=" + userId + " was not found"));
+        try {
+            userClient.checkUser(userId);
+        } catch (FeignException e) {
+            throw new NotFoundException("Not confirmed the existence of User " + userId);
+        }
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Event with id=" + eventId + " was not found"));
 
@@ -48,7 +51,7 @@ public class RequestService {
         }
 
         // инициатор события не может добавить запрос на участие в своём событии (Ожидается код ошибки 409)
-        if (Objects.equals(requester.getId(), event.getInitiator().getId())) {
+        if (Objects.equals(userId, event.getInitiatorId())) {
             throw new ConflictException("User tries to request for his own event", "Forbidden action");
         }
 
@@ -69,7 +72,7 @@ public class RequestService {
         if (Objects.equals(event.getParticipantLimit(), 0L)) newRequestStatus = ParticipationRequestStatus.CONFIRMED;
 
         Request newRequest = Request.builder()
-                .requester(requester)
+                .requesterId(userId)
                 .event(event)
                 .status(newRequestStatus)
                 .created(LocalDateTime.now())
@@ -79,10 +82,13 @@ public class RequestService {
     }
 
     // Отмена своего запроса на участие в событии
-    @Transactional(readOnly = false)
+    @Transactional
     public ParticipationRequestDto cancelRequest(Long userId, Long requestId) {
-        User requester = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("User with id=" + userId + " was not found"));
+        try {
+            userClient.checkUser(userId);
+        } catch (FeignException e) {
+            throw new NotFoundException("Not confirmed the existence of User " + userId);
+        }
         Request existingRequest = requestRepository.findById(requestId)
                 .orElseThrow(() -> new NotFoundException("Request with id=" + requestId + " was not found"));
 
@@ -92,6 +98,7 @@ public class RequestService {
     }
 
     // Получение информации о заявках текущего пользователя на участие в чужих событиях
+    @Transactional(readOnly = true)
     public Collection<ParticipationRequestDto> findRequesterRequests(Long userId) {
         return requestRepository.findByRequesterId(userId).stream()
                 .filter(Objects::nonNull)
@@ -102,14 +109,18 @@ public class RequestService {
     // ЗАЯВКИ НА КОНКРЕТНОЕ СОБЫТИЕ
 
     // Получение информации о запросах на участие в событии текущего пользователя
+    @Transactional(readOnly = true)
     public Collection<ParticipationRequestDto> findEventRequests(Long userId, Long eventId) {
-        User initiator = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("User with id=" + userId + " was not found"));
+        try {
+            userClient.checkUser(userId);
+        } catch (FeignException e) {
+            throw new NotFoundException("Not confirmed the existence of User " + userId);
+        }
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Event with id=" + eventId + " was not found"));
 
         // проверка что юзер - инициатор события
-        if (!Objects.equals(initiator.getId(), event.getInitiator().getId())) {
+        if (!Objects.equals(userId, event.getInitiatorId())) {
             throw new ConflictException("User " + userId + " is not an initiator of event " + eventId, "Forbidden action");
         }
 
@@ -120,19 +131,22 @@ public class RequestService {
     }
 
     // Изменение статуса (подтверждена, отменена) заявок на участие в событии текущего пользователя
-    @Transactional(readOnly = false)
+    @Transactional
     public EventRequestStatusUpdateResultDto moderateRequest(
             Long userId,
             Long eventId,
             EventRequestStatusUpdateRequestDto updateRequestDto
     ) {
-        User initiator = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("User with id=" + userId + " was not found"));
+        try {
+            userClient.checkUser(userId);
+        } catch (FeignException e) {
+            throw new NotFoundException("Not confirmed the existence of User " + userId);
+        }
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Event with id=" + eventId + " was not found"));
 
         // проверка что юзер - инициатор события
-        if (!Objects.equals(initiator.getId(), event.getInitiator().getId())) {
+        if (!Objects.equals(userId, event.getInitiatorId())) {
             throw new ConflictException("User " + userId + " is not an initiator of event " + eventId, "Forbidden action");
         }
 

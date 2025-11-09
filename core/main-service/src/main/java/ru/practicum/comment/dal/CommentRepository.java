@@ -13,6 +13,8 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
 
     Page<Comment> findAllByEventId(Long eventId, Pageable pageable);
 
+    Page<Comment> findAllByEventIdAndApproved(Long eventId, Boolean approved, Pageable pageable);
+
     @Query("select new ru.practicum.dto.comment.CommentCountDto(c.event.id, count(c.id)) " +
             "from Comment as c " +
             "where c.event.id in ?1 " +

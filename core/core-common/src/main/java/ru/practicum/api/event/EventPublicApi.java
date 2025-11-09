@@ -28,8 +28,8 @@ public interface EventPublicApi {
             @RequestParam(required = false) @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeEnd,
             @RequestParam(defaultValue = "false") Boolean onlyAvailable,
             @RequestParam(defaultValue = "EVENT_DATE") EventSort eventSort,
-            @RequestParam(defaultValue = "0") Long from,
-            @RequestParam(defaultValue = "10") Long size,
+            @RequestParam(defaultValue = "0") Integer from,
+            @RequestParam(defaultValue = "10") Integer size,
             HttpServletRequest request
     );
 

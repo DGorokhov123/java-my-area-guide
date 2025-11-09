@@ -1,88 +1,110 @@
 package ru.practicum.comment.service;
 
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.client.UserClient;
 import ru.practicum.comment.dal.Comment;
 import ru.practicum.comment.dal.CommentRepository;
 import ru.practicum.dto.comment.CommentDto;
+import ru.practicum.dto.user.UserDto;
 import ru.practicum.exception.NotFoundException;
-import ru.practicum.user.dal.UserRepository;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class CommentAdminServiceImpl implements CommentAdminService {
 
-    private final CommentRepository repository;
-    private final UserRepository userRepository;
+    private final CommentRepository commentRepository;
+
+    private final UserClient userClient;
 
     @Override
     @Transactional
     public String delete(Long comId) {
-        log.info("admin delete - invoked");
-        if (!repository.existsById(comId)) {
-            log.error("User with id = {} not exist", comId);
-            throw new NotFoundException("Comment not found");
-        }
-        log.info("Result: comment with id = {} deleted", comId);
-        repository.deleteById(comId);
+        if (!commentRepository.existsById(comId)) throw new NotFoundException("Not found Comment " + comId);
+        commentRepository.deleteById(comId);
         return "deleted comment " + comId;
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<CommentDto> search(String text, int from, int size) {
-        log.info("admin search - invoked");
         Pageable pageable = PageRequest.of(from / size, size);
-        Page<Comment> page = repository.findAllByText(text, pageable);
-        List<Comment> list = page.getContent();
-        log.info("Result: list of comments size = {} ", list.size());
-        return CommentMapper.toListCommentDto(list);
+        List<Comment> comments = commentRepository.findAllByText(text, pageable).getContent();
+        Set<Long> userIds = comments.stream().map(Comment::getAuthorId).collect(Collectors.toSet());
+
+        Map<Long, UserDto> userMap;
+        try {
+            userMap = userClient.getUserDtoListByIds(userIds).stream()
+                    .collect(Collectors.toMap(UserDto::getId, u -> u));
+        } catch (FeignException e) {
+            throw new NotFoundException("Unable to get info for Users in list " + userIds);
+        }
+        return comments.stream()
+                .map(c -> CommentMapper.toCommentDto(c, userMap.get(c.getAuthorId())))
+                .toList();
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<CommentDto> findAllByUserId(Long userId, int from, int size) {
-        log.info("admin findAllByUserId - invoked");
-        if (!userRepository.existsById(userId)) {
-            log.error("User with id = {} not exist", userId);
-            throw new NotFoundException("User not found");
+        UserDto userDto;
+        try {
+            userDto = userClient.getUser(userId);
+        } catch (FeignException e) {
+            throw new NotFoundException("Not confirmed the existence of User " + userId);
         }
         Pageable pageable = PageRequest.of(from / size, size);
-        Page<Comment> page = repository.findAllByAuthorId(userId, pageable);
-        List<Comment> list = page.getContent();
-        log.info("Result: list of comments size = {} ", list.size());
-        return CommentMapper.toListCommentDto(list);
+        List<Comment> comments = commentRepository.findAllByAuthorId(userId, pageable).getContent();
+        return comments.stream()
+                .map(c -> CommentMapper.toCommentDto(c, userDto))
+                .toList();
     }
 
     @Override
     @Transactional
     public CommentDto approveComment(Long comId) {
-        log.info("approveComment - invoked");
-        Comment comment = repository.findById(comId)
-                .orElseThrow(() -> new NotFoundException("Comment not found"));
+        Comment comment = commentRepository.findById(comId)
+                .orElseThrow(() -> new NotFoundException("Not found Comment " + comId));
+
+        UserDto userDto;
+        try {
+            userDto = userClient.getUser(comment.getAuthorId());
+        } catch (FeignException e) {
+            throw new NotFoundException("Not confirmed the existence of User " + comment.getAuthorId());
+        }
+
         comment.setApproved(true);
-        repository.save(comment);
-        log.info("Result: comment with id = {} approved", comId);
-        return CommentMapper.toCommentDto(comment);
+        commentRepository.save(comment);
+        return CommentMapper.toCommentDto(comment, userDto);
     }
 
     @Override
     @Transactional
     public CommentDto rejectComment(Long comId) {
-        log.info("rejectComment - invoked");
-        Comment comment = repository.findById(comId).orElseThrow(() -> new NotFoundException("Comment not found"));
+        Comment comment = commentRepository.findById(comId)
+                .orElseThrow(() -> new NotFoundException("Not found Comment " + comId));
+
+        UserDto userDto;
+        try {
+            userDto = userClient.getUser(comment.getAuthorId());
+        } catch (FeignException e) {
+            throw new NotFoundException("Not confirmed the existence of User " + comment.getAuthorId());
+        }
+
         comment.setApproved(false);
-        repository.save(comment);
-        log.info("Result: comment with id = {} rejected", comId);
-        return CommentMapper.toCommentDto(comment);
+        commentRepository.save(comment);
+        return CommentMapper.toCommentDto(comment, userDto);
     }
 
 }

@@ -28,8 +28,8 @@ public class EventParams {
 
     private EventSort eventSort;
 
-    private Long from;
+    private Integer from;
 
-    private Long size;
+    private Integer size;
 
 }

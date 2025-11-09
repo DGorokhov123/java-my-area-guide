@@ -23,10 +23,18 @@ public class EventPublicController implements EventPublicApi {
 
     // Получение событий с возможностью фильтрации
     @Override
-    public List<EventShortDto> getAllEventsByParams(String text, List<Long> categories, Boolean paid,
-                                                    LocalDateTime rangeStart, LocalDateTime rangeEnd,
-                                                    Boolean onlyAvailable, EventSort eventSort, Long from,
-                                                    Long size, HttpServletRequest request) {
+    public List<EventShortDto> getAllEventsByParams(
+            String text,
+            List<Long> categories,
+            Boolean paid,
+            LocalDateTime rangeStart,
+            LocalDateTime rangeEnd,
+            Boolean onlyAvailable,
+            EventSort eventSort,
+            Integer from,
+            Integer size,
+            HttpServletRequest request
+    ) {
         EventParams params = EventParams.builder()
                 .text(text)
                 .categories(categories)

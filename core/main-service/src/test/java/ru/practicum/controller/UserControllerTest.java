@@ -8,11 +8,11 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import ru.practicum.dto.user.NewUserRequestDto;
+import ru.practicum.dto.user.UserDto;
 import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.NotFoundException;
 import ru.practicum.user.controller.UserController;
-import ru.practicum.dto.user.NewUserRequestDto;
-import ru.practicum.dto.user.UserDto;
 import ru.practicum.user.service.UserService;
 
 import java.util.Arrays;

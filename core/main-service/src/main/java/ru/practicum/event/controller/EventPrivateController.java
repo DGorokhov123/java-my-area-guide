@@ -27,7 +27,7 @@ public class EventPrivateController implements EventPrivateApi {
 
     // Получение событий, добавленных текущим пользователем
     @Override
-    public Collection<EventShortDto> getAllEventsByUserId(Long userId, Long from, Long size) {
+    public Collection<EventShortDto> getAllEventsByUserId(Long userId, Integer from, Integer size) {
         return eventPrivateService.getEventsByUserId(userId, from, size);
     }
 

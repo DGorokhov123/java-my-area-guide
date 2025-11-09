@@ -1,91 +1,93 @@
 package ru.practicum.comment.service;
 
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.dto.comment.CommentCreateDto;
-import ru.practicum.dto.comment.CommentDto;
+import ru.practicum.client.UserClient;
 import ru.practicum.comment.dal.Comment;
 import ru.practicum.comment.dal.CommentRepository;
+import ru.practicum.dto.comment.CommentCreateDto;
+import ru.practicum.dto.comment.CommentDto;
 import ru.practicum.dto.event.State;
+import ru.practicum.dto.user.UserDto;
 import ru.practicum.event.dal.Event;
 import ru.practicum.event.dal.EventRepository;
 import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.NotFoundException;
-import ru.practicum.user.dal.User;
-import ru.practicum.user.dal.UserRepository;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@Transactional
 public class CommentPrivateServiceImpl implements CommentPrivateService {
 
-    private final CommentRepository repository;
-    private final UserRepository userRepository;
+    private final CommentRepository commentRepository;
     private final EventRepository eventRepository;
 
+    private final UserClient userClient;
+
     @Override
-    public CommentDto createComment(Long userId, Long eventId, CommentCreateDto commentDto) {
-        log.info("createComment - invoked");
-        Comment comment = CommentMapper.toComment(commentDto);
-        User author = userRepository.findById(userId)
-                .orElseThrow(() -> {
-                    log.error("User with id = {} - not registered", userId);
-                    return new NotFoundException("Please register first then you can comment");
-                });
+    @Transactional
+    public CommentDto createComment(Long userId, Long eventId, CommentCreateDto commentCreateDto) {
+        UserDto userDto;
+        try {
+            userDto = userClient.getUser(userId);
+        } catch (FeignException e) {
+            throw new NotFoundException("Not confirmed the existence of User " + userId);
+        }
+
         Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> {
-                    log.error("Event with id = {} - not exist", eventId);
-                    return new NotFoundException("Event not found");
-                });
-        if (!event.getState().equals(State.PUBLISHED)) {
-            log.error("Event state = {} - should be PUBLISHED", event.getState());
-            throw new ConflictException("Event not published you cant comment it");
-        }
-        comment.setAuthor(author);
-        comment.setEvent(event);
-        comment.setApproved(true);   // по умолчанию комменты видны, но админ может удалить/вернуть
-        comment.setCreateTime(LocalDateTime.now().withNano(0));
-        log.info("Result: new comment created");
-        return CommentMapper.toCommentDto(repository.save(comment));
+                .orElseThrow(() -> new NotFoundException("Not found Event " + eventId));
+
+        if (!Objects.equals(event.getState(), State.PUBLISHED))
+            throw new ConflictException("Unable to comment unpublished Event " + eventId);
+
+        Comment comment = Comment.builder()
+                .text(commentCreateDto.getText())
+                .authorId(userId)
+                .event(event)
+                .approved(true)                                  // по умолчанию комменты видны
+                .createTime(LocalDateTime.now())
+                .build();
+        commentRepository.save(comment);
+        return CommentMapper.toCommentDto(comment, userDto);
     }
 
     @Override
+    @Transactional
     public String deleteComment(Long userId, Long comId) {
-        log.info("deleteComment - invoked");
-        Comment comment = repository.findById(comId)
-                .orElseThrow(() -> {
-                    log.error("Comment with id = {} - not exist", comId);
-                    return new NotFoundException("Comment not found");
-                });
-        if (!comment.getAuthor().getId().equals(userId)) {
-            log.error("Unauthorized access by user");
-            throw new ConflictException("you didn't write this comment and can't delete it");
-        }
-        log.info("Result: comment with id = {} - deleted", comId);
-        repository.deleteById(comId);
-        return "Comment deleted by user: " + comId;
+        Comment comment = commentRepository.findById(comId)
+                .orElseThrow(() -> new NotFoundException("Not found Comment " + comId));
+        if (!Objects.equals(comment.getAuthorId(), userId))
+            throw new ConflictException("Unauthorized access by user " + userId + " to comment " + comId);
+        commentRepository.deleteById(comId);
+        return "Deleted Comment " + comId;
     }
 
     @Override
+    @Transactional
     public CommentDto patchComment(Long userId, Long comId, CommentCreateDto commentCreateDto) {
-        log.info("patchComment - invoked");
-        Comment comment = repository.findById(comId)
-                .orElseThrow(() -> {
-                    log.error("Comment with id = {} - not exist", comId);
-                    return new NotFoundException("Comment not found");
-                });
-        if (!comment.getAuthor().getId().equals(userId)) {
-            log.error("Unauthorized access by user");
-            throw new ConflictException("you didn't write this comment and can't patch it");
+        UserDto userDto;
+        try {
+            userDto = userClient.getUser(userId);
+        } catch (FeignException e) {
+            throw new NotFoundException("Not confirmed the existence of User " + userId);
         }
+
+        Comment comment = commentRepository.findById(comId)
+                .orElseThrow(() -> new NotFoundException("Not found Comment " + comId));
+
+        if (!Objects.equals(comment.getAuthorId(), userId))
+            throw new ConflictException("Unauthorized access by user " + userId + " to comment " + comId);
+
         comment.setText(commentCreateDto.getText());
-        comment.setPatchTime(LocalDateTime.now().withNano(0));
-        log.info("Result: comment with id = {} - updated", comId);
-        return CommentMapper.toCommentDto(comment);
+        comment.setPatchTime(LocalDateTime.now());
+        commentRepository.save(comment);
+        return CommentMapper.toCommentDto(comment, userDto);
     }
+
 }

@@ -5,7 +5,6 @@ import lombok.*;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 import ru.practicum.event.dal.Event;
-import ru.practicum.user.dal.User;
 
 import java.time.LocalDateTime;
 
@@ -31,10 +30,8 @@ public class Comment {
     @Column(name = "textual_content", length = 1000, nullable = false)
     private String text;
 
-    @ManyToOne
-    @JoinColumn(name = "author_id", nullable = false)
-    @OnDelete(action = OnDeleteAction.RESTRICT)
-    private User author;
+    @Column(name = "author_id", nullable = false)
+    private Long authorId;
 
     @ManyToOne
     @JoinColumn(name = "event_id", nullable = false)
@@ -49,9 +46,5 @@ public class Comment {
 
     @Column(name = "approved", nullable = false)
     private Boolean approved;
-
-    public boolean isApproved() {
-        return approved;
-    }
 
 }

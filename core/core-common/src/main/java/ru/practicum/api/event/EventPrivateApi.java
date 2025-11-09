@@ -26,8 +26,8 @@ public interface EventPrivateApi {
     @ResponseStatus(HttpStatus.OK)
     Collection<EventShortDto> getAllEventsByUserId(
             @PathVariable @Positive Long userId,
-            @RequestParam(defaultValue = "0") Long from,
-            @RequestParam(defaultValue = "10") Long size
+            @RequestParam(defaultValue = "0") Integer from,
+            @RequestParam(defaultValue = "10") Integer size
     );
 
     // Получение полной информации о событии добавленном текущим пользователем

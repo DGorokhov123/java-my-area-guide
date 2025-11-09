@@ -8,7 +8,6 @@ import ru.practicum.category.dal.Category;
 import ru.practicum.comment.dal.Comment;
 import ru.practicum.dto.event.State;
 import ru.practicum.request.dal.Request;
-import ru.practicum.user.dal.User;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -22,7 +21,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "events", indexes = {
-        @Index(name = "idx_events_initiator", columnList = "initiator"),
+        @Index(name = "idx_events_initiator_id", columnList = "initiator_id"),
         @Index(name = "idx_events_categories_id", columnList = "categories_id")
 })
 public class Event {
@@ -33,10 +32,8 @@ public class Event {
     @Column(name = "id")
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "initiator", nullable = false)
-    @OnDelete(action = OnDeleteAction.RESTRICT)
-    private User initiator;
+    @Column(name = "initiator_id", nullable = false)
+    private Long initiatorId;
 
     @ManyToOne
     @JoinColumn(name = "categories_id", nullable = false)

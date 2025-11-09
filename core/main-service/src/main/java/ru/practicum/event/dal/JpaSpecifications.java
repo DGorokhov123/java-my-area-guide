@@ -19,7 +19,7 @@ public class JpaSpecifications {
             List<Predicate> predicates = new ArrayList<>();
 
             if (params.getUsers() != null && !params.getUsers().isEmpty())
-                predicates.add(root.get("initiator").get("id").in(params.getUsers()));
+                predicates.add(root.get("initiatorId").in(params.getUsers()));
 
             if (params.getStates() != null && !params.getStates().isEmpty())
                 predicates.add(root.get("state").in(params.getStates()));

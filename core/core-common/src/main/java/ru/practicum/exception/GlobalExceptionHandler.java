@@ -149,19 +149,18 @@ public class GlobalExceptionHandler {
 
     // OTHER UNKNOWN EXCEPTIONS ---------------------------------------------------
 
-    @ExceptionHandler(
-            RuntimeException.class                        // Internal Server Error
-    )
-    public ResponseEntity<ApiError> handleRuntimeException(RuntimeException e, HttpServletRequest request) {
-        log.debug("INTERNAL SERVER ERROR: {}", e.getMessage());
-        ApiError apiError = ApiError.builder()
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .reason("Internal Server Error")
-                .message(e.getMessage())
-                .timestamp(LocalDateTime.now())
-                .build();
-        return new ResponseEntity<>(apiError, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-
+//    @ExceptionHandler(
+//            RuntimeException.class                        // Internal Server Error
+//    )
+//    public ResponseEntity<ApiError> handleRuntimeException(RuntimeException e, HttpServletRequest request) {
+//        log.debug("INTERNAL SERVER ERROR: {}", e.getMessage());
+//        ApiError apiError = ApiError.builder()
+//                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+//                .reason("Internal Server Error")
+//                .message(e.getMessage())
+//                .timestamp(LocalDateTime.now())
+//                .build();
+//        return new ResponseEntity<>(apiError, HttpStatus.INTERNAL_SERVER_ERROR);
+//    }
 
 }

@@ -5,13 +5,15 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.exception.ConflictException;
-import ru.practicum.exception.NotFoundException;
 import ru.practicum.dto.user.NewUserRequestDto;
 import ru.practicum.dto.user.UserDto;
+import ru.practicum.dto.user.UserShortDto;
+import ru.practicum.exception.ConflictException;
+import ru.practicum.exception.NotFoundException;
 import ru.practicum.user.dal.User;
 import ru.practicum.user.dal.UserRepository;
 
+import java.util.Collection;
 import java.util.List;
 
 @Service
@@ -41,6 +43,24 @@ public class UserService {
         userRepository.delete(userToDelete);
     }
 
+    // GET + HEAD
+
+    public UserDto get(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Not found User " + userId));
+        return UserMapper.toDto(user);
+    }
+
+    public UserShortDto getShort(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Not found User " + userId));
+        return UserMapper.toUserShortDto(user);
+    }
+
+    public void check(Long userId) {
+        if (!userRepository.existsById(userId)) throw new NotFoundException("Not found User " + userId);
+    }
+
     // GET COLLECTION
 
     public List<UserDto> findByIdListWithOffsetAndLimit(List<Long> idList, Integer from, Integer size) {
@@ -56,6 +76,20 @@ public class UserService {
                     .map(UserMapper::toDto)
                     .toList();
         }
+    }
+
+    public Collection<UserShortDto> findUserShortDtoListByIds(Collection<Long> idList) {
+        if (idList == null || idList.isEmpty()) return List.of();
+        return userRepository.findAllById(idList).stream()
+                .map(UserMapper::toUserShortDto)
+                .toList();
+    }
+
+    public Collection<UserDto> findUserDtoListByIds(Collection<Long> idList) {
+        if (idList == null || idList.isEmpty()) return List.of();
+        return userRepository.findAllById(idList).stream()
+                .map(UserMapper::toDto)
+                .toList();
     }
 
 }

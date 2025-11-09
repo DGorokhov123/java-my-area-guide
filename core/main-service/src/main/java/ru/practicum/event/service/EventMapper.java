@@ -1,24 +1,23 @@
 package ru.practicum.event.service;
 
-import ru.practicum.category.service.CategoryMapper;
 import ru.practicum.category.dal.Category;
+import ru.practicum.category.service.CategoryMapper;
 import ru.practicum.dto.event.*;
+import ru.practicum.dto.user.UserShortDto;
 import ru.practicum.event.dal.Event;
-import ru.practicum.user.service.UserMapper;
-import ru.practicum.user.dal.User;
 
 import java.time.LocalDateTime;
 
 public class EventMapper {
 
 
-    public static Event toEvent(
+    public static Event toNewEvent(
             NewEventDto newEventDto,
-            User initiator,
+            Long userId,
             Category category
     ) {
         return Event.builder()
-                .initiator(initiator)
+                .initiatorId(userId)
                 .category(category)
                 .title(newEventDto.getTitle())
                 .annotation(newEventDto.getAnnotation())
@@ -36,13 +35,14 @@ public class EventMapper {
 
     public static EventFullDto toEventFullDto(
             Event event,
+            UserShortDto userShortDto,
             Long confirmedRequests,
             Long views
     ) {
         if (confirmedRequests == null) confirmedRequests = 0L;
         return EventFullDto.builder()
                 .id(event.getId())
-                .initiator(UserMapper.toUserShortDto(event.getInitiator()))
+                .initiator(userShortDto)
                 .category(CategoryMapper.toCategoryDto(event.getCategory()))
                 .title(event.getTitle())
                 .annotation(event.getAnnotation())
@@ -62,13 +62,14 @@ public class EventMapper {
 
     public static EventShortDto toEventShortDto(
             Event event,
+            UserShortDto userShortDto,
             Long confirmedRequests,
             Long views
     ) {
         if (confirmedRequests == null) confirmedRequests = 0L;
         return EventShortDto.builder()
                 .id(event.getId())
-                .initiator(UserMapper.toUserShortDto(event.getInitiator()))
+                .initiator(userShortDto)
                 .category(CategoryMapper.toCategoryDto(event.getCategory()))
                 .title(event.getTitle())
                 .annotation(event.getAnnotation())

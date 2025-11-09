@@ -21,6 +21,15 @@ spring:
         webflux:
           routes:
 
+            - id: user_service_base
+              uri: lb://user-service
+              predicates:
+                - Path=/admin/users
+            - id: user_service_userid
+              uri: lb://user-service
+              predicates:
+                - Path=/admin/users/{userid}
+
             - id: main-service
               uri: lb://main-service
               predicates:

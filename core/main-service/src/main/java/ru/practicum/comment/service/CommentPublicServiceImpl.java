@@ -1,20 +1,26 @@
 package ru.practicum.comment.service;
 
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.dto.comment.CommentDto;
-import ru.practicum.dto.comment.CommentShortDto;
+import ru.practicum.client.UserClient;
 import ru.practicum.comment.dal.Comment;
 import ru.practicum.comment.dal.CommentRepository;
+import ru.practicum.dto.comment.CommentDto;
+import ru.practicum.dto.comment.CommentShortDto;
+import ru.practicum.dto.user.UserDto;
 import ru.practicum.event.dal.EventRepository;
 import ru.practicum.exception.ForbiddenException;
 import ru.practicum.exception.NotFoundException;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static ru.practicum.util.Util.createPageRequestAsc;
@@ -24,63 +30,72 @@ import static ru.practicum.util.Util.createPageRequestAsc;
 @Slf4j
 public class CommentPublicServiceImpl implements CommentPublicService {
 
-    private final CommentRepository repository;
+    private final CommentRepository commentRepository;
     private final EventRepository eventRepository;
+
+    private final UserClient userClient;
 
     @Override
     @Transactional(readOnly = true)
     public CommentDto getComment(Long comId) {
-        log.info("getComment - invoked");
-        Comment comment = repository.findById(comId)
-                .orElseThrow(() -> {
-                    log.error("Comment with id = {} - not exist", comId);
-                    return new NotFoundException("Comment not found");
-                });
-        if (!comment.isApproved()) {
-            log.warn("Comment with id = {} is not approved", comId);
-            throw new ForbiddenException("Comment is not approved");
+        Comment comment = commentRepository.findById(comId)
+                .orElseThrow(() -> new NotFoundException("Not found Comment " + comId));
+
+        if (!Objects.equals(comment.getApproved(), true))
+            throw new ForbiddenException("Comment " + comId + "is not approved");
+
+        UserDto userDto;
+        try {
+            userDto = userClient.getUser(comment.getAuthorId());
+        } catch (FeignException e) {
+            throw new NotFoundException("Not confirmed the existence of User " + comment.getAuthorId());
         }
-        log.info("Result: comment with id= {}", comId);
-        return CommentMapper.toCommentDto(comment);
+
+        return CommentMapper.toCommentDto(comment, userDto);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<CommentShortDto> getCommentsByEvent(Long eventId, int from, int size) {
-        log.info("getCommentsByEvent - invoked");
-        if (!eventRepository.existsById(eventId)) {
-            log.error("Event with id = {} - not exist", eventId);
-            throw new NotFoundException("Event not found");
+        if (!eventRepository.existsById(eventId)) throw new NotFoundException("Not found Event " + eventId);
+
+        Pageable pageable = createPageRequestAsc("createTime", from / size, size);
+        Page<Comment> comments = commentRepository.findAllByEventIdAndApproved(eventId, true, pageable);
+
+        Set<Long> userIds = comments.stream().map(Comment::getAuthorId).collect(Collectors.toSet());
+        Map<Long, UserDto> userMap;
+        try {
+            userMap = userClient.getUserDtoListByIds(userIds).stream()
+                    .collect(Collectors.toMap(UserDto::getId, u -> u));
+        } catch (FeignException e) {
+            throw new NotFoundException("Unable to get info for Users in list " + userIds);
         }
-        Pageable pageable = createPageRequestAsc("createTime", from, size);
-        Page<Comment> commentsPage = repository.findAllByEventId(eventId, pageable);
-        List<Comment> comments = commentsPage.getContent();
-        List<Comment> approvedComments = comments.stream()
-                .filter(Comment::isApproved)
-                .collect(Collectors.toList());
-        log.info("Result : list of approved comments size = {}", approvedComments.size());
-        return CommentMapper.toListCommentShortDto(approvedComments);
+
+        return comments.stream()
+                .map(c -> CommentMapper.toCommentShortDto(c, userMap.get(c.getAuthorId())))
+                .toList();
     }
 
     @Override
     @Transactional(readOnly = true)
-    public CommentDto getCommentByEventAndCommentId(Long eventId, Long commentId) {
-        log.info("getCommentByEventAndCommentId - invoked");
-        Comment comment = repository.findById(commentId)
-                .orElseThrow(() -> {
-                    log.error("Comment with id = {} does not exist", commentId);
-                    return new NotFoundException("Comment not found");
-                });
-        if (!comment.getEvent().getId().equals(eventId)) {
-            log.error("Comment with id = {} does not belong to event with id = {}", commentId, eventId);
-            throw new NotFoundException("Comment not found for the specified event");
+    public CommentDto getCommentByEventAndCommentId(Long eventId, Long comId) {
+        Comment comment = commentRepository.findById(comId)
+                .orElseThrow(() -> new NotFoundException("Not found Comment " + comId));
+
+        if (!Objects.equals(comment.getEvent().getId(), eventId))
+            throw new NotFoundException("Comment " + comId + " does not belong to Event " + eventId);
+
+        if (!Objects.equals(comment.getApproved(), true))
+            throw new ForbiddenException("Comment " + comId + "is not approved");
+
+        UserDto userDto;
+        try {
+            userDto = userClient.getUser(comment.getAuthorId());
+        } catch (FeignException e) {
+            throw new NotFoundException("Not confirmed the existence of User " + comment.getAuthorId());
         }
-        if (!comment.isApproved()) {
-            log.warn("Comment with id = {} is not approved", commentId);
-            throw new ForbiddenException("Comment is not approved");
-        }
-        log.info("Result: comment with eventId= {} and commentId= {}", eventId, commentId);
-        return CommentMapper.toCommentDto(comment);
+
+        return CommentMapper.toCommentDto(comment, userDto);
     }
 
 }
