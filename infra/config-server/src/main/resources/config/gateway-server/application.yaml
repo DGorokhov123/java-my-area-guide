@@ -21,16 +21,27 @@ spring:
         webflux:
           routes:
 
-            - id: user_service_base
+            - id: user_service
               uri: lb://user-service
               predicates:
-                - Path=/admin/users
-            - id: user_service_userid
-              uri: lb://user-service
-              predicates:
-                - Path=/admin/users/{userid}
+                - Path=
+                    /admin/users,
+                    /admin/users/*,
+                    /admin/users/*/short,
+                    /admin/users/all/*
 
-            - id: main-service
-              uri: lb://main-service
+            - id: comment_service
+              uri: lb://comment-service
+              predicates:
+                - Path=
+                    /comments/**, 
+                    /events/*/comments/**, 
+                    /users/*/events/*/comments, 
+                    /users/*/comments/**, 
+                    /admin/comments/**, 
+                    /admin/users/*/comments
+
+            - id: event-service
+              uri: lb://event-service
               predicates:
                 - Path=/**

@@ -4,15 +4,14 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.Positive;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.*;
+import ru.practicum.dto.event.EventCommentDto;
 import ru.practicum.dto.event.EventFullDto;
 import ru.practicum.dto.event.EventShortDto;
 import ru.practicum.dto.event.EventSort;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 
 public interface EventPublicApi {
@@ -39,6 +38,20 @@ public interface EventPublicApi {
     EventFullDto getInformationAboutEventByEventId(
             @PathVariable @Positive Long id,
             HttpServletRequest request
+    );
+
+    // Получение информации о событии для сервиса комментариев
+    @GetMapping("/events/{id}/dto/comment")
+    @ResponseStatus(HttpStatus.OK)
+    EventCommentDto getEventCommentDto(
+            @PathVariable @Positive Long id
+    );
+
+    // Получение информации о списке событий для сервиса комментариев
+    @PostMapping("/events/dto/list/comment")
+    @ResponseStatus(HttpStatus.OK)
+    Collection<EventCommentDto> getEventCommentDtoList(
+            @RequestBody Collection<Long> ids
     );
 
 }

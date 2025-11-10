@@ -15,8 +15,9 @@
 
     <modules>
         <module>core-common</module>
-        <module>main-service</module>
+        <module>event-service</module>
         <module>user-service</module>
+        <module>comment-service</module>
     </modules>
 
 </project>

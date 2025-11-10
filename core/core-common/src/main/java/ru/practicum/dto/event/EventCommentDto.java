@@ -14,4 +14,7 @@ public class EventCommentDto {
     private Long id;
 
     private String title;
+
+    private State state;
+
 }
