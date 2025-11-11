@@ -1,5 +1,8 @@
 package ru.practicum.exception;
 
+import lombok.Getter;
+
+@Getter
 public class BadRequestException extends RuntimeException {
 
     private final String reason;
@@ -12,10 +15,6 @@ public class BadRequestException extends RuntimeException {
     public BadRequestException(String message, String reason) {
         super(message);
         this.reason = reason;
-    }
-
-    public String getReason() {
-        return reason;
     }
 
 }

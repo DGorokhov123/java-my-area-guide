@@ -31,7 +31,7 @@ public class UserService {
             throw new ConflictException("User with email " + newUserRequestDto.getEmail() + " already exists",
                     "Integrity constraint has been violated");
         }
-        User newUser = UserMapper.toEntity(newUserRequestDto);
+        User newUser = UserMapper.toNewEntity(newUserRequestDto);
         userRepository.save(newUser);
         return UserMapper.toDto(newUser);
     }
@@ -55,10 +55,6 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("Not found User " + userId));
         return UserMapper.toUserShortDto(user);
-    }
-
-    public void check(Long userId) {
-        if (!userRepository.existsById(userId)) throw new NotFoundException("Not found User " + userId);
     }
 
     // GET COLLECTION

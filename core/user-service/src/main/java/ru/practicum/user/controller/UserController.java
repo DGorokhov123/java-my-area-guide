@@ -43,11 +43,6 @@ public class UserController implements UserApi {
         return userService.getShort(userId);
     }
 
-    @Override
-    public void checkUser(Long userId) {
-        userService.check(userId);
-    }
-
     // GET COLLECTION
 
     @Override

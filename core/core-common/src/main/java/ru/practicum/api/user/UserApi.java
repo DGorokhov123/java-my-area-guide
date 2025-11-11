@@ -41,12 +41,6 @@ public interface UserApi {
             @PathVariable @Positive(message = "User Id not valid") Long userId
     );
 
-    @RequestMapping(value = "/admin/users/{userId}", method = RequestMethod.HEAD)
-    @ResponseStatus(HttpStatus.OK)
-    void checkUser(
-            @PathVariable @Positive(message = "User Id not valid") Long userId
-    );
-
     // GET COLLECTION
 
     @GetMapping("/admin/users")
