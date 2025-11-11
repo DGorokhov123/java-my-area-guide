@@ -2,10 +2,7 @@ package ru.practicum.request.dal;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
 import ru.practicum.dto.request.ParticipationRequestStatus;
-import ru.practicum.event.dal.Event;
 
 import java.time.LocalDateTime;
 
@@ -33,10 +30,8 @@ public class Request {
     @Column(name = "requester_id", nullable = false)
     private Long requesterId;
 
-    @ManyToOne
-    @JoinColumn(name = "event_id", nullable = false)
-    @OnDelete(action = OnDeleteAction.RESTRICT)
-    private Event event;
+    @Column(name = "event_id", nullable = false)
+    private Long eventId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 15, nullable = false)

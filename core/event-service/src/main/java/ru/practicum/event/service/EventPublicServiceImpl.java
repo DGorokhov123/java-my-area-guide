@@ -3,27 +3,22 @@ package ru.practicum.event.service;
 import feign.FeignException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.EventHitDto;
+import ru.practicum.client.RequestClient;
 import ru.practicum.client.UserClient;
 import ru.practicum.dto.event.*;
-import ru.practicum.dto.request.ParticipationRequestStatus;
 import ru.practicum.dto.user.UserShortDto;
 import ru.practicum.event.dal.*;
 import ru.practicum.ewm.client.StatClient;
 import ru.practicum.exception.BadRequestException;
 import ru.practicum.exception.NotFoundException;
-import ru.practicum.request.dal.RequestRepository;
 
 import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -31,10 +26,10 @@ import java.util.stream.Collectors;
 public class EventPublicServiceImpl implements EventPublicService {
 
     private final EventRepository eventRepository;
-    private final RequestRepository requestRepository;
     private final ViewRepository viewRepository;
 
     private final UserClient userClient;
+    private final RequestClient requestClient;
     private final StatClient statClient;
 
     // Получение событий с возможностью фильтрации
@@ -53,8 +48,8 @@ public class EventPublicServiceImpl implements EventPublicService {
         Sort sort = Sort.by(Sort.Direction.ASC, "eventDate");
         if (EventSort.VIEWS.equals(params.getEventSort())) sort = Sort.by(Sort.Direction.DESC, "views");
         PageRequest pageRequest = PageRequest.of(params.getFrom() / params.getSize(), params.getSize(), sort);
+        List<Event> events = eventRepository.findAll(JpaSpecifications.publicFilters(params), pageRequest).getContent();
 
-        Page<Event> events = eventRepository.findAll(JpaSpecifications.publicFilters(params), pageRequest);
         List<Long> eventIds = events.stream().map(Event::getId).toList();
         Set<Long> userIds = events.stream().map(Event::getInitiatorId).collect(Collectors.toSet());
 
@@ -71,12 +66,23 @@ public class EventPublicServiceImpl implements EventPublicService {
         }
 
         // информация о каждом событии должна включать в себя количество просмотров и количество уже одобренных заявок на участие
-        Map<Long, Long> confirmedRequestsMap = requestRepository.getConfirmedRequestsByEventIds(eventIds)
-                .stream()
-                .collect(Collectors.toMap(
-                        r -> (Long) r[0],
-                        r -> (Long) r[1]
-                ));
+        Map<Long, Long> confirmedRequestsMap;
+        try {
+            confirmedRequestsMap = requestClient.getConfirmedRequestsByEventIds(eventIds);
+        } catch (FeignException e) {
+            throw new NotFoundException("Unable to get info about confirmed requests");
+        }
+
+        if (params.getOnlyAvailable() == true && !confirmedRequestsMap.isEmpty()) {
+            events = events.stream()
+                    .filter(e -> {
+                        if (Objects.equals(e.getParticipantLimit(), 0L)) return true;
+                        Long confirmedRequests = confirmedRequestsMap.get(e.getId());
+                        if (confirmedRequests == null) return true;
+                        return confirmedRequests < e.getParticipantLimit();
+                    }).toList();
+        }
+
         Map<Long, Long> viewsMap = viewRepository.countsByEventIds(eventIds)
                 .stream()
                 .collect(Collectors.toMap(
@@ -118,7 +124,13 @@ public class EventPublicServiceImpl implements EventPublicService {
         }
 
         // информация о событии должна включать в себя количество просмотров и количество подтвержденных запросов
-        Long confirmedRequests = requestRepository.countByEventIdAndStatus(eventId, ParticipationRequestStatus.CONFIRMED);
+        Map<Long, Long> confirmedRequestsMap;
+        try {
+            confirmedRequestsMap = requestClient.getConfirmedRequestsByEventIds(List.of(eventId));
+        } catch (FeignException e) {
+            throw new NotFoundException("Unable to get info about confirmed requests");
+        }
+
         Long views = viewRepository.countByEventId(eventId);
 
         // делаем новый уникальный просмотр
@@ -138,7 +150,7 @@ public class EventPublicServiceImpl implements EventPublicService {
                 .timestamp(LocalDateTime.now())
                 .build());
 
-        return EventMapper.toEventFullDto(event, userShortDto, confirmedRequests, views);
+        return EventMapper.toEventFullDto(event, userShortDto, confirmedRequestsMap.get(eventId), views);
     }
 
     @Override
@@ -155,6 +167,13 @@ public class EventPublicServiceImpl implements EventPublicService {
         return events.stream()
                 .map(EventMapper::toEventComment)
                 .toList();
+    }
+
+    @Override
+    public EventInteractionDto getEventInteractionDto(Long eventId) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new NotFoundException("Not found Event " + eventId));
+        return EventMapper.toInteractionDto(event);
     }
 
 }

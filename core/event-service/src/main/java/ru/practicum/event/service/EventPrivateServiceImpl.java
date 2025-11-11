@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.category.dal.Category;
 import ru.practicum.category.dal.CategoryRepository;
+import ru.practicum.client.RequestClient;
 import ru.practicum.client.UserClient;
 import ru.practicum.dto.event.*;
 import ru.practicum.dto.request.ParticipationRequestStatus;
@@ -18,7 +19,6 @@ import ru.practicum.event.dal.EventRepository;
 import ru.practicum.event.dal.ViewRepository;
 import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.NotFoundException;
-import ru.practicum.request.dal.RequestRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -32,10 +32,10 @@ public class EventPrivateServiceImpl implements EventPrivateService {
 
     private final CategoryRepository categoryRepository;
     private final EventRepository eventRepository;
-    private final RequestRepository requestRepository;
     private final ViewRepository viewRepository;
 
     private final UserClient userClient;
+    private final RequestClient requestClient;
 
     // Добавление нового события
     @Override
@@ -47,8 +47,10 @@ public class EventPrivateServiceImpl implements EventPrivateService {
         } catch (FeignException e) {
             throw new NotFoundException("Not confirmed the existence of User " + userId);
         }
+
         Category category = categoryRepository.findById(newEventDto.getCategory())
-                .orElseThrow(() -> new NotFoundException("Category with id=" + newEventDto.getCategory() + " was not found"));
+                .orElseThrow(() -> new NotFoundException("Not found Category " + newEventDto.getCategory()));
+
         Event newEvent = EventMapper.toNewEvent(newEventDto, userId, category);
         eventRepository.save(newEvent);
         return EventMapper.toEventFullDto(newEvent, userShortDto, 0L, 0L);
@@ -58,21 +60,28 @@ public class EventPrivateServiceImpl implements EventPrivateService {
     @Override
     @Transactional(readOnly = true)
     public EventFullDto getEventByUserIdAndEventId(Long userId, Long eventId) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new NotFoundException("Not found Event " + eventId));
+
+        if (!Objects.equals(userId, event.getInitiatorId()))
+            throw new ConflictException("User " + userId + " is not an initiator of event " + eventId, "Forbidden action");
+
         UserShortDto userShortDto;
         try {
             userShortDto = userClient.getUserShort(userId);
         } catch (FeignException e) {
             throw new NotFoundException("Not confirmed the existence of User " + userId);
         }
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new NotFoundException("Event with id=" + eventId + " was not found"));
 
-        if (!Objects.equals(userId, event.getInitiatorId()))
-            throw new ConflictException("User " + userId + " is not an initiator of event " + eventId, "Forbidden action");
+        Map<Long, Long> confirmedRequestsMap;
+        try {
+            confirmedRequestsMap = requestClient.getConfirmedRequestsByEventIds(List.of(eventId));
+        } catch (FeignException e) {
+            throw new NotFoundException("Unable to get info about confirmed requests");
+        }
 
-        Long confirmedRequests = requestRepository.countByEventIdAndStatus(event.getId(), ParticipationRequestStatus.CONFIRMED);
         Long views = viewRepository.countByEventId(eventId);
-        return EventMapper.toEventFullDto(event, userShortDto, confirmedRequests, views);
+        return EventMapper.toEventFullDto(event, userShortDto, confirmedRequestsMap.get(eventId), views);
     }
 
     // Получение событий, добавленных текущим пользователем
@@ -89,12 +98,13 @@ public class EventPrivateServiceImpl implements EventPrivateService {
         List<Event> events = eventRepository.findByInitiatorId(userId, pageable);
         List<Long> eventIds = events.stream().map(Event::getId).toList();
 
-        Map<Long, Long> confirmedRequestsMap = requestRepository.getConfirmedRequestsByEventIds(eventIds)
-                .stream()
-                .collect(Collectors.toMap(
-                        r -> (Long) r[0],
-                        r -> (Long) r[1]
-                ));
+        Map<Long, Long> confirmedRequestsMap;
+        try {
+            confirmedRequestsMap = requestClient.getConfirmedRequestsByEventIds(eventIds);
+        } catch (FeignException e) {
+            throw new NotFoundException("Unable to get info about confirmed requests");
+        }
+
         Map<Long, Long> viewsMap = viewRepository.countsByEventIds(eventIds)
                 .stream()
                 .collect(Collectors.toMap(
@@ -161,9 +171,16 @@ public class EventPrivateServiceImpl implements EventPrivateService {
         }
 
         eventRepository.save(event);
-        Long confirmedRequests = requestRepository.countByEventIdAndStatus(event.getId(), ParticipationRequestStatus.CONFIRMED);
+
+        Map<Long, Long> confirmedRequestsMap;
+        try {
+            confirmedRequestsMap = requestClient.getConfirmedRequestsByEventIds(List.of(eventId));
+        } catch (FeignException e) {
+            throw new NotFoundException("Unable to get info about confirmed requests");
+        }
+
         Long views = viewRepository.countByEventId(eventId);
-        return EventMapper.toEventFullDto(event, userShortDto, confirmedRequests, views);
+        return EventMapper.toEventFullDto(event, userShortDto, confirmedRequestsMap.get(eventId), views);
     }
 
 }

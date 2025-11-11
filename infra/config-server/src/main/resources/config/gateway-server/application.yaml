@@ -41,7 +41,27 @@ spring:
                     /admin/comments/**, 
                     /admin/users/*/comments
 
+            - id: request_service
+              uri: lb://request-service
+              predicates:
+                - Path=
+                  /requests/**,
+                  /users/*/requests,
+                  /users/*/requests/*/cancel,
+                  /users/*/events/*/requests
+
             - id: event-service
               uri: lb://event-service
               predicates:
-                - Path=/**
+                - Path=
+                  /admin/events/**,
+                  /users/*/events,
+                  /users/*/events/*,
+                  /events,
+                  /events/*,
+                  /events/*/dto/*,
+                  /events/dto/list/comment,
+                  /categories/**,
+                  /admin/categories/**,
+                  /compilations/**,
+                  /admin/compilations/**

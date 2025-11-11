@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import ru.practicum.dto.request.ParticipationRequestStatus;
 
+import java.util.Collection;
 import java.util.List;
 
 public interface RequestRepository extends JpaRepository<Request, Long> {
@@ -29,7 +30,7 @@ public interface RequestRepository extends JpaRepository<Request, Long> {
     @Query("""
             UPDATE Request r
             SET r.status = 'REJECTED'
-            WHERE r.event.id = :eventId
+            WHERE r.eventId = :eventId
             AND r.status = 'PENDING'
             """)
     void setStatusToRejectForAllPending(
@@ -37,13 +38,13 @@ public interface RequestRepository extends JpaRepository<Request, Long> {
     );
 
     @Query("""
-            SELECT r.event.id, count(r)
+            SELECT r.eventId, count(r)
             FROM Request r
-            WHERE r.event.id IN :eventIds
-            GROUP BY r.event.id
+            WHERE r.eventId IN :eventIds
+            GROUP BY r.eventId
             """)
     List<Object[]> getConfirmedRequestsByEventIds(
-            @Param("eventIds") List<Long> eventIds
+            @Param("eventIds") Collection<Long> eventIds
     );
 
 }

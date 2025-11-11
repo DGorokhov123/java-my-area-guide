@@ -88,4 +88,24 @@ public class EventMapper {
                 .state(event.getState())
                 .build();
     }
+
+    public static EventInteractionDto toInteractionDto(Event event) {
+        return EventInteractionDto.builder()
+                .id(event.getId())
+                .initiatorId(event.getInitiatorId())
+                .categoryId(event.getCategory().getId())
+                .title(event.getTitle())
+                .annotation(event.getAnnotation())
+                .description(event.getDescription())
+                .state(event.getState())
+                .location(LocationMapper.toDto(event.getLocation()))
+                .participantLimit(event.getParticipantLimit())
+                .requestModeration(event.getRequestModeration())
+                .paid(event.getPaid())
+                .eventDate(event.getEventDate())
+                .publishedOn(event.getPublishedOn())
+                .createdOn(event.getCreatedOn())
+                .build();
+    }
+
 }

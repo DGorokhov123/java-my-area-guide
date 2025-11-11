@@ -1,13 +1,9 @@
 package ru.practicum.event.dal;
 
-import jakarta.persistence.criteria.Join;
-import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 import ru.practicum.dto.event.EventAdminParams;
 import ru.practicum.dto.event.EventParams;
-import ru.practicum.dto.request.ParticipationRequestStatus;
-import ru.practicum.request.dal.Request;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -58,16 +54,6 @@ public class JpaSpecifications {
 
             if (params.getRangeEnd() != null)
                 predicates.add(cb.lessThanOrEqualTo(root.get("eventDate"), params.getRangeEnd()));
-
-            if (params.getOnlyAvailable() == true) {
-                Join<Event, Request> requestJoin = root.join("requests", JoinType.LEFT);
-                requestJoin.on(cb.equal(requestJoin.get("status"), ParticipationRequestStatus.CONFIRMED));
-                query.groupBy(root.get("id"));
-
-                Predicate unlimitedPredicate = cb.equal(root.get("participantLimit"), 0);
-                Predicate hasFreeSeatsPredicate = cb.greaterThan(root.get("participantLimit"), cb.count(requestJoin));
-                query.having(cb.or(unlimitedPredicate, hasFreeSeatsPredicate));
-            }
 
             return cb.and(predicates.toArray(new Predicate[0]));
         };

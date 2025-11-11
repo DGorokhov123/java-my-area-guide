@@ -8,9 +8,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.category.dal.Category;
 import ru.practicum.category.dal.CategoryRepository;
+import ru.practicum.client.RequestClient;
 import ru.practicum.client.UserClient;
 import ru.practicum.dto.event.*;
-import ru.practicum.dto.request.ParticipationRequestStatus;
 import ru.practicum.dto.user.UserShortDto;
 import ru.practicum.event.dal.Event;
 import ru.practicum.event.dal.EventRepository;
@@ -18,7 +18,6 @@ import ru.practicum.event.dal.JpaSpecifications;
 import ru.practicum.event.dal.ViewRepository;
 import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.NotFoundException;
-import ru.practicum.request.dal.RequestRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -33,10 +32,10 @@ public class EventAdminServiceImpl implements EventAdminService {
 
     private final EventRepository eventRepository;
     private final CategoryRepository categoryRepository;
-    private final RequestRepository requestRepository;
     private final ViewRepository viewRepository;
 
     private final UserClient userClient;
+    private final RequestClient requestClient;
 
     // Поиск событий
     @Override
@@ -59,12 +58,13 @@ public class EventAdminServiceImpl implements EventAdminService {
             throw new NotFoundException("Unable to get info for Users in list " + userIds);
         }
 
-        Map<Long, Long> confirmedRequestsMap = requestRepository.getConfirmedRequestsByEventIds(eventIds)
-                .stream()
-                .collect(Collectors.toMap(
-                        r -> (Long) r[0],
-                        r -> (Long) r[1]
-                ));
+        Map<Long, Long> confirmedRequestsMap;
+        try {
+            confirmedRequestsMap = requestClient.getConfirmedRequestsByEventIds(eventIds);
+        } catch (FeignException e) {
+            throw new NotFoundException("Unable to get info about confirmed requests");
+        }
+
         Map<Long, Long> viewsMap = viewRepository.countsByEventIds(eventIds)
                 .stream()
                 .collect(Collectors.toMap(
@@ -134,9 +134,16 @@ public class EventAdminServiceImpl implements EventAdminService {
         }
 
         eventRepository.save(event);
-        Long confirmedRequests = requestRepository.countByEventIdAndStatus(eventId, ParticipationRequestStatus.CONFIRMED);
+
+        Map<Long, Long> confirmedRequestsMap;
+        try {
+            confirmedRequestsMap = requestClient.getConfirmedRequestsByEventIds(List.of(eventId));
+        } catch (FeignException e) {
+            throw new NotFoundException("Unable to get info about confirmed requests");
+        }
+
         Long views = viewRepository.countByEventId(eventId);
-        return EventMapper.toEventFullDto(event, userShortDto, confirmedRequests, views);
+        return EventMapper.toEventFullDto(event, userShortDto, confirmedRequestsMap.get(eventId), views);
     }
 
 }

@@ -10,6 +10,7 @@ import ru.practicum.dto.request.ParticipationRequestDto;
 import ru.practicum.request.service.RequestService;
 
 import java.util.Collection;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -51,6 +52,11 @@ public class RequestController implements RequestApi {
     @Override
     public Collection<ParticipationRequestDto> getEventRequests(Long userId, Long eventId) {
         return requestService.findEventRequests(userId, eventId);
+    }
+
+    @Override
+    public Map<Long, Long> getConfirmedRequestsByEventIds(Collection<Long> eventIds) {
+        return requestService.getConfirmedRequestsByEventIds(eventIds);
     }
 
 }

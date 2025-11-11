@@ -6,10 +6,8 @@ import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 import ru.practicum.category.dal.Category;
 import ru.practicum.dto.event.State;
-import ru.practicum.request.dal.Request;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Getter
 @Setter
@@ -72,8 +70,5 @@ public class Event {
 
     @Column(name = "created_on", nullable = false)
     private LocalDateTime createdOn;
-
-    @OneToMany(mappedBy = "event", fetch = FetchType.LAZY)
-    private List<Request> requests;
 
 }

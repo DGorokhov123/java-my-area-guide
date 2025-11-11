@@ -63,4 +63,9 @@ public class EventPublicController implements EventPublicApi {
         return eventPublicService.getEventCommentDtoList(ids);
     }
 
+    @Override
+    public EventInteractionDto getEventInteractionDto(Long id) {
+        return eventPublicService.getEventInteractionDto(id);
+    }
+
 }

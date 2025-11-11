@@ -5,10 +5,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.Positive;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.dto.event.EventCommentDto;
-import ru.practicum.dto.event.EventFullDto;
-import ru.practicum.dto.event.EventShortDto;
-import ru.practicum.dto.event.EventSort;
+import ru.practicum.dto.event.*;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
@@ -52,6 +49,13 @@ public interface EventPublicApi {
     @ResponseStatus(HttpStatus.OK)
     Collection<EventCommentDto> getEventCommentDtoList(
             @RequestBody Collection<Long> ids
+    );
+
+    // Получение информации о событии для сервиса заявок
+    @GetMapping("/events/{id}/dto/interaction")
+    @ResponseStatus(HttpStatus.OK)
+    EventInteractionDto getEventInteractionDto(
+            @PathVariable @Positive Long id
     );
 
 }
