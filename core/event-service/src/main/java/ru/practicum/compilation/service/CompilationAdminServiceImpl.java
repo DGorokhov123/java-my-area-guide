@@ -1,11 +1,11 @@
 package ru.practicum.compilation.service;
 
-import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.client.UserClient;
+import org.springframework.transaction.support.TransactionTemplate;
+import ru.practicum.client.UserClientHelper;
 import ru.practicum.compilation.dal.Compilation;
 import ru.practicum.compilation.dal.CompilationRepository;
 import ru.practicum.dto.compilation.CompilationDto;
@@ -27,35 +27,39 @@ import java.util.stream.Collectors;
 @Slf4j
 public class CompilationAdminServiceImpl implements CompilationAdminService {
 
+    private final TransactionTemplate transactionTemplate;
     private final CompilationRepository compilationRepository;
     private final EventRepository eventRepository;
 
-    private final UserClient userClient;
+    private final UserClientHelper userClientHelper;
 
     @Override
-    @Transactional
     public CompilationDto createCompilation(NewCompilationDto newCompilationDto) {
         Set<Event> events = new HashSet<>();
         Map<Long, UserShortDto> userMap = new HashMap<>();
 
+        if (newCompilationDto.getPinned() == null) newCompilationDto.setPinned(false);
+
         if (newCompilationDto.getEvents() != null && !newCompilationDto.getEvents().isEmpty()) {
-            events = new HashSet<>(eventRepository.findAllById(newCompilationDto.getEvents()));
+            events = transactionTemplate.execute(status -> {
+                return new HashSet<>(eventRepository.findAllById(newCompilationDto.getEvents()));
+            });
             Set<Long> userIds = events.stream().map(Event::getInitiatorId).collect(Collectors.toSet());
-            try {
-                userMap = userClient.getUserShortDtoListByIds(userIds).stream()
-                        .collect(Collectors.toMap(UserShortDto::getId, u -> u));
-            } catch (FeignException e) {
-                throw new NotFoundException("Unable to get info for Users in list " + userIds);
-            }
+            userMap = userClientHelper.retrieveUserShortDtoMapByUserIdList(userIds);
         }
 
-        Compilation compilation = Compilation.builder()
-                .pinned(newCompilationDto.getPinned() != null && newCompilationDto.getPinned())
-                .title(newCompilationDto.getTitle())
-                .events(events)
-                .build();
-        compilationRepository.save(compilation);
-        return CompilationMapper.toCompilationDto(compilation, userMap);
+        Set<Event> eventsFinal = events;
+        Map<Long, UserShortDto> userMapFinal = userMap;
+
+        return transactionTemplate.execute(status -> {
+            Compilation compilation = Compilation.builder()
+                    .pinned(newCompilationDto.getPinned())
+                    .title(newCompilationDto.getTitle())
+                    .events(eventsFinal)
+                    .build();
+            compilationRepository.save(compilation);
+            return CompilationMapper.toCompilationDto(compilation, userMapFinal);
+        });
     }
 
     @Override
@@ -67,32 +71,32 @@ public class CompilationAdminServiceImpl implements CompilationAdminService {
     }
 
     @Override
-    @Transactional
     public CompilationDto updateCompilation(Long compId, UpdateCompilationDto updateCompilationDto) {
-        Compilation compilation = compilationRepository.findById(compId)
-                .orElseThrow(() -> new NotFoundException("Not found Compilation " + compId));
+        Set<Long> userIds = transactionTemplate.execute(status -> {
+            Compilation compilation = compilationRepository.findById(compId)
+                    .orElseThrow(() -> new NotFoundException("Not found Compilation " + compId));
+            return compilation.getEvents().stream().map(Event::getInitiatorId).collect(Collectors.toSet());
+        });
 
-        Set<Long> userIds = compilation.getEvents().stream().map(Event::getInitiatorId).collect(Collectors.toSet());
-        Map<Long, UserShortDto> userMap;
-        try {
-            userMap = userClient.getUserShortDtoListByIds(userIds).stream()
-                    .collect(Collectors.toMap(UserShortDto::getId, u -> u));
-        } catch (FeignException e) {
-            throw new NotFoundException("Unable to get info for Users in list " + userIds);
-        }
+        Map<Long, UserShortDto> userMap = userClientHelper.retrieveUserShortDtoMapByUserIdList(userIds);
 
-        if (updateCompilationDto.getTitle() != null) {
-            compilation.setTitle(updateCompilationDto.getTitle());
-        }
-        if (updateCompilationDto.getPinned() != null) {
-            compilation.setPinned(updateCompilationDto.getPinned());
-        }
-        if (updateCompilationDto.getEvents() != null && !updateCompilationDto.getEvents().isEmpty()) {
-            Set<Event> events = new HashSet<>(eventRepository.findAllById(updateCompilationDto.getEvents()));
-            compilation.setEvents(events);
-        }
-        compilationRepository.save(compilation);
-        return CompilationMapper.toCompilationDto(compilation, userMap);
+        return transactionTemplate.execute(status -> {
+            Compilation compilation = compilationRepository.findById(compId)
+                    .orElseThrow(() -> new NotFoundException("Not found Compilation " + compId));
+
+            if (updateCompilationDto.getTitle() != null) {
+                compilation.setTitle(updateCompilationDto.getTitle());
+            }
+            if (updateCompilationDto.getPinned() != null) {
+                compilation.setPinned(updateCompilationDto.getPinned());
+            }
+            if (updateCompilationDto.getEvents() != null && !updateCompilationDto.getEvents().isEmpty()) {
+                Set<Event> events = new HashSet<>(eventRepository.findAllById(updateCompilationDto.getEvents()));
+                compilation.setEvents(events);
+            }
+            compilationRepository.save(compilation);
+            return CompilationMapper.toCompilationDto(compilation, userMap);
+        });
     }
 
 }

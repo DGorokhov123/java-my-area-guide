@@ -1,15 +1,16 @@
 package ru.practicum.event.service;
 
-import feign.FeignException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import ru.practicum.category.dal.Category;
 import ru.practicum.category.dal.CategoryRepository;
-import ru.practicum.client.RequestClient;
-import ru.practicum.client.UserClient;
+import ru.practicum.client.RequestClientHelper;
+import ru.practicum.client.UserClientHelper;
 import ru.practicum.dto.event.*;
 import ru.practicum.dto.user.UserShortDto;
 import ru.practicum.event.dal.Event;
@@ -30,40 +31,28 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class EventAdminServiceImpl implements EventAdminService {
 
+    private final TransactionTemplate transactionTemplate;
     private final EventRepository eventRepository;
     private final CategoryRepository categoryRepository;
     private final ViewRepository viewRepository;
 
-    private final UserClient userClient;
-    private final RequestClient requestClient;
+    private final RequestClientHelper requestClientHelper;
+    private final UserClientHelper userClientHelper;
 
     // Поиск событий
     @Override
-    @Transactional(readOnly = true)
     public List<EventFullDto> getAllEventsByParams(EventAdminParams params) {
-        Pageable pageable = PageRequest.of(
-                params.getFrom().intValue() / params.getSize().intValue(),
-                params.getSize().intValue()
-        );
-        List<Event> events = eventRepository.findAll(JpaSpecifications.adminFilters(params), pageable).getContent();
-        List<Long> eventIds = events.stream().map(Event::getId).toList();
+        Page<Event> events = transactionTemplate.execute(status -> {
+            Pageable pageable = PageRequest.of(params.getFrom() / params.getSize(), params.getSize());
+            return eventRepository.findAll(JpaSpecifications.adminFilters(params), pageable);
+        });
+        if (events == null) return List.of();
+
         Set<Long> userIds = events.stream().map(Event::getInitiatorId).collect(Collectors.toSet());
+        List<Long> eventIds = events.stream().map(Event::getId).toList();
 
-        // запрашиваем список UserShortDto для заполнения поля Initiator
-        Map<Long, UserShortDto> userMap;
-        try {
-            userMap = userClient.getUserShortDtoListByIds(userIds).stream()
-                    .collect(Collectors.toMap(UserShortDto::getId, u -> u));
-        } catch (FeignException e) {
-            throw new NotFoundException("Unable to get info for Users in list " + userIds);
-        }
-
-        Map<Long, Long> confirmedRequestsMap;
-        try {
-            confirmedRequestsMap = requestClient.getConfirmedRequestsByEventIds(eventIds);
-        } catch (FeignException e) {
-            throw new NotFoundException("Unable to get info about confirmed requests");
-        }
+        Map<Long, UserShortDto> userMap = userClientHelper.retrieveUserShortDtoMapByUserIdList(userIds);
+        Map<Long, Long> confirmedRequestsMap = requestClientHelper.retrieveConfirmedRequestsMapByEventIdList(eventIds);
 
         Map<Long, Long> viewsMap = viewRepository.countsByEventIds(eventIds)
                 .stream()
@@ -84,66 +73,62 @@ public class EventAdminServiceImpl implements EventAdminService {
 
     // Редактирование данных события и его статуса (отклонение/публикация).
     @Override
-    @Transactional
     public EventFullDto updateEventByAdmin(Long eventId, UpdateEventDto updateEventDto) {
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new NotFoundException("Event with id=" + eventId + " was not found"));
+        Long initiatorId = transactionTemplate.execute(status -> {
+            return eventRepository.findById(eventId)
+                    .orElseThrow(() -> new NotFoundException("Not found Event " + eventId))
+                    .getInitiatorId();
+        });
 
-        UserShortDto userShortDto;
-        try {
-            userShortDto = userClient.getUserShort(event.getInitiatorId());
-        } catch (FeignException e) {
-            throw new NotFoundException("Not confirmed the existence of User " + event.getInitiatorId());
-        }
+        UserShortDto userShortDto = userClientHelper.retrieveUserShortDtoByUserId(initiatorId);
+        Map<Long, Long> confirmedRequestsMap = requestClientHelper.retrieveConfirmedRequestsMapByEventIdList(List.of(eventId));
 
-        if (updateEventDto.getCategory() != null) {
-            Category category = categoryRepository.findById(updateEventDto.getCategory())
-                    .orElseThrow(() -> new NotFoundException("Category with id=" + updateEventDto.getCategory() + " not found"));
-            event.setCategory(category);
-        }
+        return transactionTemplate.execute(status -> {
+            Event event = eventRepository.findById(eventId)
+                    .orElseThrow(() -> new NotFoundException("Event with id=" + eventId + " was not found"));
 
-        if (updateEventDto.getTitle() != null) event.setTitle(updateEventDto.getTitle());
-        if (updateEventDto.getAnnotation() != null) event.setAnnotation(updateEventDto.getAnnotation());
-        if (updateEventDto.getDescription() != null) event.setDescription(updateEventDto.getDescription());
-        if (updateEventDto.getLocation() != null)
-            event.setLocation(LocationMapper.toEntity(updateEventDto.getLocation()));
-        if (updateEventDto.getPaid() != null) event.setPaid(updateEventDto.getPaid());
-        if (updateEventDto.getParticipantLimit() != null)
-            event.setParticipantLimit(updateEventDto.getParticipantLimit());
-        if (updateEventDto.getRequestModeration() != null)
-            event.setRequestModeration(updateEventDto.getRequestModeration());
-        if (updateEventDto.getEventDate() != null) event.setEventDate(updateEventDto.getEventDate());
-
-        if (Objects.equals(updateEventDto.getStateAction(), StateAction.REJECT_EVENT)) {
-            // событие можно отклонить, только если оно еще не опубликовано (Ожидается код ошибки 409)
-            if (Objects.equals(event.getState(), State.PUBLISHED)) {
-                throw new ConflictException("Event in PUBLISHED state can not be rejected");
+            if (updateEventDto.getCategory() != null) {
+                Category category = categoryRepository.findById(updateEventDto.getCategory())
+                        .orElseThrow(() -> new NotFoundException("Category with id=" + updateEventDto.getCategory() + " not found"));
+                event.setCategory(category);
             }
-            event.setState(State.CANCELED);
-        } else if (Objects.equals(updateEventDto.getStateAction(), StateAction.PUBLISH_EVENT)) {
-            // дата начала изменяемого события должна быть не ранее чем за час от даты публикации. (Ожидается код ошибки 409)
-            if (LocalDateTime.now().plusHours(1).isAfter(event.getEventDate())) {
-                throw new ConflictException("Event time must be at least 1 hours from publish time");
+
+            if (updateEventDto.getTitle() != null) event.setTitle(updateEventDto.getTitle());
+            if (updateEventDto.getAnnotation() != null) event.setAnnotation(updateEventDto.getAnnotation());
+            if (updateEventDto.getDescription() != null) event.setDescription(updateEventDto.getDescription());
+            if (updateEventDto.getLocation() != null)
+                event.setLocation(LocationMapper.toEntity(updateEventDto.getLocation()));
+            if (updateEventDto.getPaid() != null) event.setPaid(updateEventDto.getPaid());
+            if (updateEventDto.getParticipantLimit() != null)
+                event.setParticipantLimit(updateEventDto.getParticipantLimit());
+            if (updateEventDto.getRequestModeration() != null)
+                event.setRequestModeration(updateEventDto.getRequestModeration());
+            if (updateEventDto.getEventDate() != null) event.setEventDate(updateEventDto.getEventDate());
+
+            if (Objects.equals(updateEventDto.getStateAction(), StateAction.REJECT_EVENT)) {
+                // событие можно отклонить, только если оно еще не опубликовано (Ожидается код ошибки 409)
+                if (Objects.equals(event.getState(), State.PUBLISHED)) {
+                    throw new ConflictException("Event in PUBLISHED state can not be rejected");
+                }
+                event.setState(State.CANCELED);
+            } else if (Objects.equals(updateEventDto.getStateAction(), StateAction.PUBLISH_EVENT)) {
+                // дата начала изменяемого события должна быть не ранее чем за час от даты публикации. (Ожидается код ошибки 409)
+                if (LocalDateTime.now().plusHours(1).isAfter(event.getEventDate())) {
+                    throw new ConflictException("Event time must be at least 1 hours from publish time");
+                }
+                // событие можно публиковать, только если оно в состоянии ожидания публикации (Ожидается код ошибки 409)
+                if (!Objects.equals(event.getState(), State.PENDING)) {
+                    throw new ConflictException("Event should be in PENDING state");
+                }
+                event.setState(State.PUBLISHED);
+                event.setPublishedOn(LocalDateTime.now());
             }
-            // событие можно публиковать, только если оно в состоянии ожидания публикации (Ожидается код ошибки 409)
-            if (!Objects.equals(event.getState(), State.PENDING)) {
-                throw new ConflictException("Event should be in PENDING state");
-            }
-            event.setState(State.PUBLISHED);
-            event.setPublishedOn(LocalDateTime.now());
-        }
 
-        eventRepository.save(event);
+            eventRepository.save(event);
 
-        Map<Long, Long> confirmedRequestsMap;
-        try {
-            confirmedRequestsMap = requestClient.getConfirmedRequestsByEventIds(List.of(eventId));
-        } catch (FeignException e) {
-            throw new NotFoundException("Unable to get info about confirmed requests");
-        }
-
-        Long views = viewRepository.countByEventId(eventId);
-        return EventMapper.toEventFullDto(event, userShortDto, confirmedRequestsMap.get(eventId), views);
+            Long views = viewRepository.countByEventId(eventId);
+            return EventMapper.toEventFullDto(event, userShortDto, confirmedRequestsMap.get(eventId), views);
+        });
     }
 
 }

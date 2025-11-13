@@ -1,12 +1,12 @@
 package ru.practicum.comment.service;
 
-import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.client.EventClient;
-import ru.practicum.client.UserClient;
+import org.springframework.transaction.support.TransactionTemplate;
+import ru.practicum.client.EventClientHelper;
+import ru.practicum.client.UserClientHelper;
 import ru.practicum.comment.dal.Comment;
 import ru.practicum.comment.dal.CommentRepository;
 import ru.practicum.dto.comment.CommentCreateDto;
@@ -25,41 +25,31 @@ import java.util.Objects;
 @Slf4j
 public class CommentPrivateServiceImpl implements CommentPrivateService {
 
+    private final TransactionTemplate transactionTemplate;
     private final CommentRepository commentRepository;
 
-    private final UserClient userClient;
-    private final EventClient eventClient;
+    private final UserClientHelper userClientHelper;
+    private final EventClientHelper eventClientHelper;
 
     @Override
-    @Transactional
     public CommentDto createComment(Long userId, Long eventId, CommentCreateDto commentCreateDto) {
-        log.trace("creating comment for user {} event {} dto {}", userId, eventId, commentCreateDto);
-        UserDto userDto;
-        try {
-            userDto = userClient.getUser(userId);
-        } catch (FeignException e) {
-            throw new NotFoundException("Not confirmed the existence of User " + userId);
-        }
-
-        EventCommentDto eventCommentDto;
-        try {
-            eventCommentDto = eventClient.getEventCommentDto(eventId);
-        } catch (FeignException e) {
-            throw new NotFoundException("Not confirmed the existence of Event " + eventId);
-        }
+        UserDto userDto = userClientHelper.retrieveUserDtoByUserIdOrFall(userId);
+        EventCommentDto eventCommentDto = eventClientHelper.retrieveEventCommentDtoByEventIdOrFall(eventId);
 
         if (!Objects.equals(eventCommentDto.getState(), State.PUBLISHED))
             throw new ConflictException("Unable to comment unpublished Event " + eventId);
 
-        Comment comment = Comment.builder()
-                .text(commentCreateDto.getText())
-                .authorId(userId)
-                .eventId(eventId)
-                .approved(true)                                  // по умолчанию комменты видны
-                .createTime(LocalDateTime.now())
-                .build();
-        commentRepository.save(comment);
-        return CommentMapper.toCommentDto(comment, userDto, eventCommentDto);
+        return transactionTemplate.execute(status -> {
+            Comment comment = Comment.builder()
+                    .text(commentCreateDto.getText())
+                    .authorId(userId)
+                    .eventId(eventId)
+                    .approved(true)                                  // по умолчанию комменты видны
+                    .createTime(LocalDateTime.now())
+                    .build();
+            commentRepository.save(comment);
+            return CommentMapper.toCommentDto(comment, userDto, eventCommentDto);
+        });
     }
 
     @Override
@@ -74,31 +64,22 @@ public class CommentPrivateServiceImpl implements CommentPrivateService {
     }
 
     @Override
-    @Transactional
     public CommentDto patchComment(Long userId, Long comId, CommentCreateDto commentCreateDto) {
-        Comment comment = commentRepository.findById(comId)
-                .orElseThrow(() -> new NotFoundException("Not found Comment " + comId));
+        Comment comment = transactionTemplate.execute(status -> {
+            Comment commentEntity = commentRepository.findById(comId)
+                    .orElseThrow(() -> new NotFoundException("Not found Comment " + comId));
 
-        if (!Objects.equals(comment.getAuthorId(), userId))
-            throw new ConflictException("Unauthorized access by user " + userId + " to comment " + comId);
+            if (!Objects.equals(commentEntity.getAuthorId(), userId))
+                throw new ConflictException("Unauthorized access by user " + userId + " to comment " + comId);
 
-        UserDto userDto;
-        try {
-            userDto = userClient.getUser(userId);
-        } catch (FeignException e) {
-            throw new NotFoundException("Not confirmed the existence of User " + userId);
-        }
+            commentEntity.setText(commentCreateDto.getText());
+            commentEntity.setPatchTime(LocalDateTime.now());
+            return commentRepository.save(commentEntity);
+        });
 
-        EventCommentDto eventCommentDto;
-        try {
-            eventCommentDto = eventClient.getEventCommentDto(comment.getEventId());
-        } catch (FeignException e) {
-            throw new NotFoundException("Not confirmed the existence of Event " + comment.getEventId());
-        }
+        UserDto userDto = userClientHelper.retrieveUserDtoByUserIdOrFall(userId);
+        EventCommentDto eventCommentDto = eventClientHelper.retrieveEventCommentDtoByEventIdOrFall(comment.getEventId());
 
-        comment.setText(commentCreateDto.getText());
-        comment.setPatchTime(LocalDateTime.now());
-        commentRepository.save(comment);
         return CommentMapper.toCommentDto(comment, userDto, eventCommentDto);
     }
 

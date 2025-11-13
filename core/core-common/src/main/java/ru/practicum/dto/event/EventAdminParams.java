@@ -24,8 +24,8 @@ public class EventAdminParams {
 
     private LocalDateTime rangeEnd;
 
-    private Long from;
+    private Integer from;
 
-    private Long size;
+    private Integer size;
 
 }

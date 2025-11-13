@@ -1,12 +1,11 @@
 package ru.practicum.request.service;
 
-import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
-import ru.practicum.client.EventClient;
-import ru.practicum.client.UserClient;
+import ru.practicum.client.EventClientAbstractHelper;
+import ru.practicum.client.UserClientHelper;
 import ru.practicum.dto.event.EventInteractionDto;
 import ru.practicum.dto.event.State;
 import ru.practicum.dto.request.EventRequestStatusUpdateRequestDto;
@@ -15,7 +14,6 @@ import ru.practicum.dto.request.ParticipationRequestDto;
 import ru.practicum.dto.request.ParticipationRequestStatus;
 import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.NotFoundException;
-import ru.practicum.exception.ServiceInteractionException;
 import ru.practicum.request.dal.Request;
 import ru.practicum.request.dal.RequestRepository;
 
@@ -30,29 +28,16 @@ public class RequestService {
     private final TransactionTemplate transactionTemplate;
     private final RequestRepository requestRepository;
 
-    private final UserClient userClient;
-    private final EventClient eventClient;
+    private final UserClientHelper userClientHelper;
+    private final EventClientAbstractHelper eventClientHelper;
 
     // ЗАЯВКИ ТЕКУЩЕГО ПОЛЬЗОВАТЕЛЯ
 
     // Добавление запроса от текущего пользователя на участие в событии
     public ParticipationRequestDto addRequest(Long userId, Long eventId) {
-        try {
-            userClient.getUserShort(userId);
-        } catch (FeignException.NotFound e) {
-            throw new NotFoundException("Not found User " + userId);
-        } catch (FeignException e) {
-            throw new ServiceInteractionException("Unable to check User " + userId, "user-service is unavailable");
-        }
+        userClientHelper.retrieveUserShortDtoByUserIdOrFall(userId);
 
-        EventInteractionDto eventDto;
-        try {
-            eventDto = eventClient.getEventInteractionDto(eventId);
-        } catch (FeignException.NotFound e) {
-            throw new NotFoundException("Not found Event " + eventId);
-        } catch (FeignException e) {
-            throw new ServiceInteractionException("Unable to check Event " + eventId, "event-service is unavailable");
-        }
+        EventInteractionDto eventDto = eventClientHelper.retrieveEventInteractionDtoByEventIdOrFall(eventId);
 
         return transactionTemplate.execute(status -> {
             // нельзя добавить повторный запрос (Ожидается код ошибки 409)
@@ -75,7 +60,8 @@ public class RequestService {
             // если для события отключена пре-модерация запросов на участие, то запрос должен автоматически перейти в состояние подтвержденного
             ParticipationRequestStatus newRequestStatus = ParticipationRequestStatus.PENDING;
             if (!eventDto.getRequestModeration()) newRequestStatus = ParticipationRequestStatus.CONFIRMED;
-            if (Objects.equals(eventDto.getParticipantLimit(), 0L)) newRequestStatus = ParticipationRequestStatus.CONFIRMED;
+            if (Objects.equals(eventDto.getParticipantLimit(), 0L))
+                newRequestStatus = ParticipationRequestStatus.CONFIRMED;
 
             Request newRequest = Request.builder()
                     .requesterId(userId)
@@ -114,14 +100,7 @@ public class RequestService {
 
     // Получение информации о запросах на участие в событии, инициированном текущим пользователем
     public Collection<ParticipationRequestDto> findEventRequests(Long userId, Long eventId) {
-        EventInteractionDto eventDto;
-        try {
-            eventDto = eventClient.getEventInteractionDto(eventId);
-        } catch (FeignException.NotFound e) {
-            throw new NotFoundException("Not found Event " + eventId);
-        } catch (FeignException e) {
-            throw new ServiceInteractionException("Unable to check Event " + eventId, "event-service is unavailable");
-        }
+        EventInteractionDto eventDto = eventClientHelper.retrieveEventInteractionDtoByEventIdOrFall(eventId);
 
         // проверка что юзер - инициатор события
         if (!Objects.equals(userId, eventDto.getInitiatorId()))
@@ -138,14 +117,7 @@ public class RequestService {
             Long eventId,
             EventRequestStatusUpdateRequestDto updateRequestDto
     ) {
-        EventInteractionDto eventDto;
-        try {
-            eventDto = eventClient.getEventInteractionDto(eventId);
-        } catch (FeignException.NotFound e) {
-            throw new NotFoundException("Not found Event " + eventId);
-        } catch (FeignException e) {
-            throw new ServiceInteractionException("Unable to check Event " + eventId, "event-service is unavailable");
-        }
+        EventInteractionDto eventDto = eventClientHelper.retrieveEventInteractionDtoByEventIdOrFall(eventId);
 
         // проверка что юзер - инициатор события
         if (!Objects.equals(userId, eventDto.getInitiatorId()))
@@ -209,6 +181,7 @@ public class RequestService {
         });
     }
 
+    @Transactional(readOnly = true)
     public Map<Long, Long> getConfirmedRequestsByEventIds(Collection<Long> eventIds) {
         if (eventIds == null || eventIds.isEmpty()) return Map.of();
         return requestRepository.getConfirmedRequestsByEventIds(eventIds).stream()

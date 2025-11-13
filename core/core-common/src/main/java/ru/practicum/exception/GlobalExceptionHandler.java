@@ -147,20 +147,18 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(apiError, HttpStatus.NOT_FOUND);
     }
 
-    // OTHER UNKNOWN EXCEPTIONS ---------------------------------------------------
-
-//    @ExceptionHandler(
-//            RuntimeException.class                        // Internal Server Error
-//    )
-//    public ResponseEntity<ApiError> handleRuntimeException(RuntimeException e, HttpServletRequest request) {
-//        log.debug("INTERNAL SERVER ERROR: {}", e.getMessage());
-//        ApiError apiError = ApiError.builder()
-//                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-//                .reason("Internal Server Error")
-//                .message(e.getMessage())
-//                .timestamp(LocalDateTime.now())
-//                .build();
-//        return new ResponseEntity<>(apiError, HttpStatus.INTERNAL_SERVER_ERROR);
-//    }
+    @ExceptionHandler(
+            ServiceInteractionException.class                        // custom exception
+    )
+    public ResponseEntity<ApiError> handleServiceInteractionException(ServiceInteractionException e, HttpServletRequest request) {
+        log.debug("SERVICE INTERACTION ERROR: {}", e.getMessage());
+        ApiError apiError = ApiError.builder()
+                .status(HttpStatus.SERVICE_UNAVAILABLE)
+                .reason(e.getReason())
+                .message(e.getMessage())
+                .timestamp(LocalDateTime.now())
+                .build();
+        return new ResponseEntity<>(apiError, HttpStatus.SERVICE_UNAVAILABLE);
+    }
 
 }

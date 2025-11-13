@@ -17,4 +17,10 @@ public class UserDto {
 
     private String name;
 
+    public static UserDto makeDummy(Long id) {
+        UserDto dto = new UserDto();
+        dto.setId(id);
+        return dto;
+    }
+
 }

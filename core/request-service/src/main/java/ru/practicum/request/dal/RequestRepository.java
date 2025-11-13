@@ -41,6 +41,7 @@ public interface RequestRepository extends JpaRepository<Request, Long> {
             SELECT r.eventId, count(r)
             FROM Request r
             WHERE r.eventId IN :eventIds
+            AND r.status = 'CONFIRMED'
             GROUP BY r.eventId
             """)
     List<Object[]> getConfirmedRequestsByEventIds(

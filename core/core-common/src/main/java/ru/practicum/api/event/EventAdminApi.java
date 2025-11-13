@@ -25,8 +25,8 @@ public interface EventAdminApi {
             @RequestParam(required = false) List<Long> categories,
             @RequestParam(required = false) @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeStart,
             @RequestParam(required = false) @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeEnd,
-            @RequestParam(defaultValue = "0") @PositiveOrZero Long from,
-            @RequestParam(defaultValue = "10") @Positive Long size
+            @RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
+            @RequestParam(defaultValue = "10") @Positive Integer size
     );
 
     // Редактирование данных события и его статуса (отклонение/публикация).

@@ -17,4 +17,10 @@ public class EventCommentDto {
 
     private State state;
 
+    public static EventCommentDto makeDummy(Long id) {
+        EventCommentDto dto = new EventCommentDto();
+        dto.setId(id);
+        return dto;
+    }
+
 }

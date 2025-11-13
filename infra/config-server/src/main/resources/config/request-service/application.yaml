@@ -41,3 +41,18 @@ spring:
     url: jdbc:postgresql://localhost:5433/main_db?currentSchema=request_service
     username: postgres
     password: 12345
+  cloud:
+    openfeign.circuitbreaker.enabled: true
+
+resilience4j.circuitbreaker:
+  configs:
+    default:
+      slidingWindowSize: 10
+      failureRateThreshold: 50
+      waitDurationInOpenState: 10000
+      permittedNumberOfCallsInHalfOpenState: 3
+      slidingWindowType: COUNT_BASED
+      minimumNumberOfCalls: 5
+      automaticTransitionFromOpenToHalfOpenEnabled: true
+      ignoreExceptions:
+        - feign.FeignException.FeignClientException

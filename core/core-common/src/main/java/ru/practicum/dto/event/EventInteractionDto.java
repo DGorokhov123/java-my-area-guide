@@ -45,4 +45,10 @@ public class EventInteractionDto {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdOn;
 
+    public static EventInteractionDto makeDummy(Long id) {
+        EventInteractionDto dto = new EventInteractionDto();
+        dto.setId(id);
+        return dto;
+    }
+
 }

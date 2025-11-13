@@ -8,7 +8,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.client.UserClient;
+import org.springframework.transaction.support.TransactionTemplate;
+import ru.practicum.client.UserClientHelper;
 import ru.practicum.compilation.dal.Compilation;
 import ru.practicum.compilation.dal.CompilationRepository;
 import ru.practicum.dto.compilation.CompilationDto;
@@ -16,6 +17,7 @@ import ru.practicum.dto.user.UserShortDto;
 import ru.practicum.event.dal.Event;
 import ru.practicum.exception.NotFoundException;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -26,50 +28,44 @@ import java.util.stream.Collectors;
 @Slf4j
 public class CompilationPublicServiceImpl implements CompilationPublicService {
 
+    private final TransactionTemplate transactionTemplate;
     private final CompilationRepository compilationRepository;
 
-    private final UserClient userClient;
+    private final UserClientHelper userClientHelper;
 
     @Override
-    @Transactional(readOnly = true)
     public CompilationDto readCompilationById(Long compId) {
-        Compilation compilation = compilationRepository.findById(compId)
-                .orElseThrow(() -> new NotFoundException("Compilation not found"));
+        Compilation compilation = transactionTemplate.execute(status -> {
+            return compilationRepository.findById(compId)
+                    .orElseThrow(() -> new NotFoundException("Compilation not found"));
+        });
 
-        Set<Long> userIds = compilation.getEvents().stream().map(Event::getInitiatorId).collect(Collectors.toSet());
-        Map<Long, UserShortDto> userMap;
-        try {
-            userMap = userClient.getUserShortDtoListByIds(userIds).stream()
-                    .collect(Collectors.toMap(UserShortDto::getId, u -> u));
-        } catch (FeignException e) {
-            throw new NotFoundException("Unable to get info for Users in list " + userIds);
+        Map<Long, UserShortDto> userMap = new HashMap<>();
+        if (compilation.getEvents() != null && !compilation.getEvents().isEmpty()) {
+            Set<Long> userIds = compilation.getEvents().stream().map(Event::getInitiatorId).collect(Collectors.toSet());
+            userMap = userClientHelper.retrieveUserShortDtoMapByUserIdList(userIds);
         }
 
         return CompilationMapper.toCompilationDto(compilation, userMap);
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<CompilationDto> readAllCompilations(Boolean pinned, int from, int size) {
-        Pageable pageable = PageRequest.of(from / size, size, Sort.Direction.ASC, "id");
-        List<Compilation> compilations;
-        if (pinned == null) {
-            compilations = compilationRepository.findAll(pageable).getContent();
-        } else {
-            compilations = compilationRepository.findAllByPinned(pinned, pageable).getContent();
-        }
+        List<Compilation> compilations = transactionTemplate.execute(status -> {
+            Pageable pageable = PageRequest.of(from / size, size, Sort.Direction.ASC, "id");
+            if (pinned == null) {
+                return compilationRepository.findAll(pageable).getContent();
+            } else {
+                return compilationRepository.findAllByPinned(pinned, pageable).getContent();
+            }
+        });
+        if (compilations == null || compilations.isEmpty()) return List.of();
 
         Set<Long> userIds = compilations.stream()
                 .flatMap(c -> c.getEvents().stream())
                 .map(Event::getInitiatorId)
                 .collect(Collectors.toSet());
-        Map<Long, UserShortDto> userMap;
-        try {
-            userMap = userClient.getUserShortDtoListByIds(userIds).stream()
-                    .collect(Collectors.toMap(UserShortDto::getId, u -> u));
-        } catch (FeignException e) {
-            throw new NotFoundException("Unable to get info for Users in list " + userIds);
-        }
+        Map<Long, UserShortDto> userMap = userClientHelper.retrieveUserShortDtoMapByUserIdList(userIds);
 
         return compilations.stream()
                 .map(c -> CompilationMapper.toCompilationDto(c, userMap))
