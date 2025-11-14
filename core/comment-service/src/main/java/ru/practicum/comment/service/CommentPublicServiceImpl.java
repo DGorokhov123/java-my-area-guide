@@ -1,18 +1,13 @@
 package ru.practicum.comment.service;
 
-import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
-import ru.practicum.client.EventClient;
 import ru.practicum.client.EventClientHelper;
-import ru.practicum.client.UserClient;
 import ru.practicum.client.UserClientHelper;
 import ru.practicum.comment.dal.Comment;
 import ru.practicum.comment.dal.CommentRepository;

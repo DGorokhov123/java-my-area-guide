@@ -1,7 +1,6 @@
 package ru.practicum.client;
 
 import feign.FeignException;
-import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ru.practicum.api.user.UserApi;
