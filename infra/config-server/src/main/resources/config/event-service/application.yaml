@@ -1,0 +1,58 @@
+info:
+  app:
+    name: event-service
+    description: My Area Guide
+    version: 1.0-SNAPSHOT
+  company:
+    name: Somekind Software
+
+logging:
+  level:
+    org.springframework.web: INFO
+    org.springframework.validation: INFO
+
+management:
+  endpoints.web.exposure.include: health,info,metrics
+  endpoint.health.show-details: always
+  metrics.export.prometheus.enabled: true
+  info.env.enabled: true
+
+explore-with-me:
+  stat-server.discovery.name: stats-server
+  datetime.format: yyyy-MM-dd HH:mm:ss
+  main.datetime.format: yyyy-MM-dd HH:mm:ss
+  stat.datetime.format: yyyy-MM-dd HH:mm:ss
+
+server:
+  port: 0
+  shutdown: graceful
+
+spring:
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+  jpa:
+    show-sql: true
+    properties.hibernate.format_sql: false
+    hibernate.ddl-auto: create
+  sql:
+    init.mode: always
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5433/main_db?currentSchema=event_service
+    username: postgres
+    password: 12345
+  cloud:
+    openfeign.circuitbreaker.enabled: true
+
+resilience4j.circuitbreaker:
+  configs:
+    default:
+      slidingWindowSize: 10
+      failureRateThreshold: 50
+      waitDurationInOpenState: 10000
+      permittedNumberOfCallsInHalfOpenState: 3
+      slidingWindowType: COUNT_BASED
+      minimumNumberOfCalls: 5
+      automaticTransitionFromOpenToHalfOpenEnabled: true
+      ignoreExceptions:
+        - feign.FeignException.FeignClientException
