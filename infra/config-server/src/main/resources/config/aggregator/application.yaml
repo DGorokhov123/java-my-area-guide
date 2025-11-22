@@ -7,15 +7,15 @@ info:
     name: Somekind Software
 
 my-area-guide:
-  algo:
-    minimum-sum-algorithm: optimized
-  weights:
-    like: 1.0
-    register: 0.8
-    view: 0.4
   kafka:
     user-action-topic: stats.user-actions.v1
     events-similarity-topic: stats.events-similarity.v1
+  aggregator:
+    minimum-sum-algorithm: optimized
+    weights:
+      like: 1.0
+      register: 0.8
+      view: 0.4
 
 server:
   shutdown: graceful

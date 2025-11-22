@@ -15,14 +15,20 @@ import java.math.BigDecimal;
 public class CustomProperties {
 
     private final Kafka kafka = new Kafka();
-    private final Weights weights = new Weights();
-    private final Algo algo = new Algo();
+    private final Aggregator aggregator = new Aggregator();
 
     @Getter
     @Setter
     public static class Kafka {
         private String userActionTopic = "user-actions";
         private String eventsSimilarityTopic = "events-similarity";
+    }
+
+    @Getter
+    @Setter
+    public static class Aggregator {
+        private final Weights weights = new Weights();
+        private String minimumSumAlgorithm = "optimized";
     }
 
     @Getter
@@ -39,12 +45,6 @@ public class CustomProperties {
                 default -> new BigDecimal(view);
             };
         }
-    }
-
-    @Getter
-    @Setter
-    public static class Algo {
-        private String minimumSumAlgorithm = "optimized";
     }
 
 }

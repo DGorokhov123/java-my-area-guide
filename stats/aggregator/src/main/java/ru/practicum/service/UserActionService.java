@@ -36,7 +36,7 @@ public class UserActionService {
         Long userId = userActionAvro.getUserId();
         Long eventId = userActionAvro.getEventId();
         BigDecimal oldWeight = BigDecimal.ZERO;
-        BigDecimal newWeight = customProperties.getWeights().ofUserAction(userActionAvro);
+        BigDecimal newWeight = customProperties.getAggregator().getWeights().ofUserAction(userActionAvro);
         log.debug("IN: W[{},{}] = {}", userId, eventId, newWeight);
 
         Map<Long, BigDecimal> userWeights = weightsByUser.computeIfAbsent(userId, id -> new HashMap<>());
@@ -59,7 +59,7 @@ public class UserActionService {
         // обновляем сумму вектора события
         recountEventSum(eventId, newWeight, oldWeight);
         // обновляем суммы минимумов векторов событий
-        if (customProperties.getAlgo().getMinimumSumAlgorithm().toLowerCase().contains("naive")) {
+        if (customProperties.getAggregator().getMinimumSumAlgorithm().toLowerCase().contains("naive")) {
             recountEventMinWeightsNaive(userId, eventId);
         } else {
             recountEventMinWeightsOptimized(userId, eventId, oldWeight, newWeight);
