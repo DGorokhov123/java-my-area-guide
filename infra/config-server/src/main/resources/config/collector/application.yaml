@@ -32,7 +32,7 @@ spring:
     bootstrap-servers: localhost:9092
     producer:
       key-serializer: org.apache.kafka.common.serialization.VoidSerializer
-      value-serializer: ru.practicum.GeneralAvroSerializer
+      value-serializer: ru.practicum.serializer.GeneralAvroSerializer
       acks: all
       retries: 10
       linger-ms: 5
