@@ -57,7 +57,7 @@ public class UserActionService {
         userWeights.put(eventId, newWeight);
         eventWeights.put(userId, newWeight);
         // обновляем сумму вектора события
-        recountEventSum(eventId, newWeight, oldWeight);
+        recountEventSum(eventId, oldWeight, newWeight);
         // обновляем суммы минимумов векторов событий
         if (customProperties.getAggregator().getMinimumSumAlgorithm().toLowerCase().contains("naive")) {
             recountEventMinWeightsNaive(userId, eventId);
@@ -95,7 +95,7 @@ public class UserActionService {
     }
 
     // пересчет таблицы сумм векторов события
-    private void recountEventSum(Long eventId, BigDecimal newWeight, BigDecimal oldWeight) {
+    private void recountEventSum(Long eventId, BigDecimal oldWeight, BigDecimal newWeight) {
         BigDecimal delta = newWeight.subtract(oldWeight);
         BigDecimal prevSum = eventSums.get(eventId);
         eventSums.merge(eventId, delta, BigDecimal::add);
