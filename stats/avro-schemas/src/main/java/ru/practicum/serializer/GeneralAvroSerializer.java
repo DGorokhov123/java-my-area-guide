@@ -1,4 +1,4 @@
-package ru.practicum;
+package ru.practicum.serializer;
 
 import org.apache.avro.io.BinaryEncoder;
 import org.apache.avro.io.DatumWriter;
