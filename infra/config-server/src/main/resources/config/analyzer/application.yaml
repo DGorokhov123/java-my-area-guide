@@ -10,13 +10,25 @@ my-area-guide:
   kafka:
     user-action-topic: stats.user-actions.v1
     events-similarity-topic: stats.events-similarity.v1
+    user-action-consumer-group: analyzer-user-action-group-01
+    events-similarity-consumer-group: analyzer-events-similarity-group-01
+    bootstrap-servers: localhost:9092
+    auto-offset-reset: latest
+    enable-auto-commit: false
+    max-poll-records: 500
+  analyzer:
+    weights:
+      like: 1.0
+      register: 0.8
+      view: 0.4
 
 server:
   shutdown: graceful
 
 logging:
   level:
-#    ru.practicum.service.UserActionService: DEBUG
+    ru.practicum.service.UserActionService: DEBUG
+    ru.practicum.service.EventSimilarityService: DEBUG
     io.grpc: INFO
 
 management:
@@ -28,15 +40,18 @@ management:
 spring:
   lifecycle:
     timeout-per-shutdown-phase: 30s
-  kafka:
-    bootstrap-servers: localhost:9092
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.VoidSerializer
-      value-serializer: ru.practicum.GeneralAvroSerializer
-      acks: all
-      retries: 10
-      linger-ms: 5
-      properties:
-        enable.idempotence: true
-        max.in.flight.requests.per.connection: 5
+  jpa:
+    show-sql: true
+    properties.hibernate.format_sql: false
+    hibernate.ddl-auto: create
+  sql:
+    init.mode: always
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/stat_db?currentSchema=analyzer
+    username: postgres
+    password: 12345
 
+grpc:
+  server:
+    port: 0
