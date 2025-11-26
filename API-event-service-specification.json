@@ -1571,7 +1571,7 @@
                 },
                 "paid": true,
                 "title": "Знаменитое шоу 'Летающая кукуруза'",
-                "views": 999
+                "rating": 6.6
               },
               {
                 "annotation": "За почти три десятилетия группа 'Java Core' закрепились на сцене как группа, объединяющая поколения.",
@@ -1588,7 +1588,7 @@
                 },
                 "paid": true,
                 "title": "Концерт рок-группы 'Java Core'",
-                "views": 991
+                "rating": 3.7
               }
             ],
             "items": {
@@ -1705,11 +1705,11 @@
             "description": "Заголовок",
             "example": "Знаменитое шоу 'Летающая кукуруза'"
           },
-          "views": {
-            "type": "integer",
-            "description": "Количество просмотрев события",
-            "format": "int64",
-            "example": 999
+          "rating": {
+            "type": "number",
+            "description": "Рейтинг события",
+            "format": "float8",
+            "example": 4.8
           }
         }
       },
@@ -1762,11 +1762,11 @@
             "description": "Заголовок",
             "example": "Знаменитое шоу 'Летающая кукуруза'"
           },
-          "views": {
-            "type": "integer",
+          "rating": {
+            "type": "number",
             "description": "Количество просмотрев события",
-            "format": "int64",
-            "example": 999
+            "format": "float8",
+            "example": 5.4
           }
         },
         "description": "Краткая информация о событии",
@@ -1786,7 +1786,7 @@
             },
             "paid": true,
             "title": "Знаменитое шоу 'Летающая кукуруза'",
-            "views": 999
+            "rating": 9.8
           },
           {
             "annotation": "За почти три десятилетия группа 'Java Core' закрепились на сцене как группа, объединяющая поколения.",
@@ -1803,7 +1803,7 @@
             },
             "paid": true,
             "title": "Концерт рок-группы 'Java Core'",
-            "views": 991
+            "rating": 6.8
           }
         ]
       },

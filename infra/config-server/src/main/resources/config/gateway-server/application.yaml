@@ -48,7 +48,8 @@ spring:
                   /requests/**,
                   /users/*/requests,
                   /users/*/requests/*/cancel,
-                  /users/*/events/*/requests
+                  /users/*/events/*/requests,
+                  /users/*/events/*/check/participation
 
             - id: event-service
               uri: lb://event-service
@@ -64,4 +65,5 @@ spring:
                   /categories/**,
                   /admin/categories/**,
                   /compilations/**,
-                  /admin/compilations/**
+                  /admin/compilations/**,
+                  /events/*/like
