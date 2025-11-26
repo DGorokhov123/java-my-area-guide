@@ -21,10 +21,7 @@ import ru.practicum.EventStatsResponseDto;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 
 @Slf4j
@@ -137,6 +134,31 @@ public class RestStatClient implements StatClient {
             log.error("Failed call /stats on stat server: {}", e.getMessage());
             return Collections.emptyList();
         }
+    }
+
+    @Override
+    public String sendView(Long userId, Long eventId) {
+        throw new UnsupportedOperationException("Method sendView() is not supported");
+    }
+
+    @Override
+    public String sendRegister(Long userId, Long eventId) {
+        throw new UnsupportedOperationException("Method sendRegister() is not supported");
+    }
+
+    @Override
+    public String sendLike(Long userId, Long eventId) {
+        throw new UnsupportedOperationException("Method sendLike() is not supported");
+    }
+
+    @Override
+    public Map<Long, Double> getUserRecommendations(Long userId, Integer size) {
+        throw new UnsupportedOperationException("Method getUserRecommendations() is not supported");
+    }
+
+    @Override
+    public Map<Long, Double> getRatingsByEventIdList(List<Long> eventIdList) {
+        throw new UnsupportedOperationException("Method getRatingsByEventIdList() is not supported");
     }
 
 }
