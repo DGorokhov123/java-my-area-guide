@@ -30,32 +30,48 @@ public interface EventPublicApi {
     );
 
     // Получение подробной информации об опубликованном событии по его идентификатору
-    @GetMapping("/events/{id}")
+    @GetMapping("/events/{eventId}")
     @ResponseStatus(HttpStatus.OK)
     EventFullDto getInformationAboutEventByEventId(
-            @PathVariable @Positive Long id,
+            @RequestHeader("X-EWM-USER-ID") @Positive Long userId,
+            @PathVariable @Positive Long eventId,
             HttpServletRequest request
     );
 
     // Получение информации о событии для сервиса комментариев
-    @GetMapping("/events/{id}/dto/comment")
+    @GetMapping("/events/{eventId}/dto/comment")
     @ResponseStatus(HttpStatus.OK)
     EventCommentDto getEventCommentDto(
-            @PathVariable @Positive Long id
+            @PathVariable @Positive Long eventId
     );
 
     // Получение информации о списке событий для сервиса комментариев
     @PostMapping("/events/dto/list/comment")
     @ResponseStatus(HttpStatus.OK)
     Collection<EventCommentDto> getEventCommentDtoList(
-            @RequestBody Collection<Long> ids
+            @RequestBody Collection<Long> eventIds
     );
 
     // Получение информации о событии для сервиса заявок
-    @GetMapping("/events/{id}/dto/interaction")
+    @GetMapping("/events/{eventId}/dto/interaction")
     @ResponseStatus(HttpStatus.OK)
     EventInteractionDto getEventInteractionDto(
-            @PathVariable @Positive Long id
+            @PathVariable @Positive Long eventId
+    );
+
+    // рекомендации мероприятий для пользователя
+    @GetMapping("/events/recommendations")
+    @ResponseStatus(HttpStatus.OK)
+    Collection<EventShortDto> getRecommendations(
+            @RequestHeader("X-EWM-USER-ID") @Positive Long userId,
+            @RequestParam(defaultValue = "10") Integer size
+    );
+
+    @PutMapping("/events/{eventId}/like")
+    @ResponseStatus(HttpStatus.OK)
+    String sendLike(
+            @RequestHeader("X-EWM-USER-ID") @Positive Long userId,
+            @PathVariable @Positive Long eventId
     );
 
 }

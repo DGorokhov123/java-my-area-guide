@@ -13,7 +13,7 @@ public class CompilationMapper {
 
     public static CompilationDto toCompilationDto(Compilation compilation, Map<Long, UserShortDto> userMap) {
         List<EventShortDto> eventShortDtoList = compilation.getEvents().stream()
-                .map(e -> EventMapper.toEventShortDto(e, userMap.get(e.getInitiatorId()), 0L, 0L))
+                .map(e -> EventMapper.toEventShortDto(e, userMap.get(e.getInitiatorId()), 0L, 0.0))
                 .toList();
 
         return CompilationDto.builder()

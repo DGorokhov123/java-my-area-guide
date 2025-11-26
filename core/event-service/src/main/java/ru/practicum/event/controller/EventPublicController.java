@@ -49,23 +49,33 @@ public class EventPublicController implements EventPublicApi {
 
     // Получение подробной информации об опубликованном событии по его идентификатору
     @Override
-    public EventFullDto getInformationAboutEventByEventId(Long id, HttpServletRequest request) {
-        return eventPublicService.getEventById(id, request);
+    public EventFullDto getInformationAboutEventByEventId(Long userId, Long eventId, HttpServletRequest request) {
+        return eventPublicService.getEventById(userId, eventId, request);
     }
 
     @Override
-    public EventCommentDto getEventCommentDto(Long id) {
-        return eventPublicService.getEventCommentDto(id);
+    public EventCommentDto getEventCommentDto(Long eventId) {
+        return eventPublicService.getEventCommentDto(eventId);
     }
 
     @Override
-    public Collection<EventCommentDto> getEventCommentDtoList(Collection<Long> ids) {
-        return eventPublicService.getEventCommentDtoList(ids);
+    public Collection<EventCommentDto> getEventCommentDtoList(Collection<Long> eventIds) {
+        return eventPublicService.getEventCommentDtoList(eventIds);
     }
 
     @Override
-    public EventInteractionDto getEventInteractionDto(Long id) {
-        return eventPublicService.getEventInteractionDto(id);
+    public EventInteractionDto getEventInteractionDto(Long eventId) {
+        return eventPublicService.getEventInteractionDto(eventId);
+    }
+
+    @Override
+    public Collection<EventShortDto> getRecommendations(Long userId, Integer size) {
+        return eventPublicService.getRecommendations(userId, size);
+    }
+
+    @Override
+    public String sendLike(Long userId, Long eventId) {
+        return eventPublicService.sendLike(userId, eventId);
     }
 
 }
