@@ -66,4 +66,12 @@ public interface RequestApi {
             @RequestBody Collection<Long> eventIds
     );
 
+    // Проверка участия пользователя в конкретном событии перед лайком
+    @GetMapping("/users/{userId}/events/{eventId}/check/participation")
+    @ResponseStatus(HttpStatus.OK)
+    String checkParticipation(
+            @PathVariable @Positive(message = "User Id not valid") Long userId,
+            @PathVariable @Positive(message = "Event Id not valid") Long eventId
+    );
+
 }
