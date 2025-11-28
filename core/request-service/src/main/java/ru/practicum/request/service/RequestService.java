@@ -12,6 +12,7 @@ import ru.practicum.dto.request.EventRequestStatusUpdateRequestDto;
 import ru.practicum.dto.request.EventRequestStatusUpdateResultDto;
 import ru.practicum.dto.request.ParticipationRequestDto;
 import ru.practicum.dto.request.ParticipationRequestStatus;
+import ru.practicum.ewm.client.StatClient;
 import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.NotFoundException;
 import ru.practicum.request.dal.Request;
@@ -31,6 +32,8 @@ public class RequestService {
     private final UserClientHelper userClientHelper;
     private final EventClientAbstractHelper eventClientHelper;
 
+    private final StatClient statClient;
+
     // ЗАЯВКИ ТЕКУЩЕГО ПОЛЬЗОВАТЕЛЯ
 
     // Добавление запроса от текущего пользователя на участие в событии
@@ -39,7 +42,7 @@ public class RequestService {
 
         EventInteractionDto eventDto = eventClientHelper.retrieveEventInteractionDtoByEventIdOrFall(eventId);
 
-        return transactionTemplate.execute(status -> {
+        ParticipationRequestDto result = transactionTemplate.execute(status -> {
             // нельзя добавить повторный запрос (Ожидается код ошибки 409)
             if (requestRepository.existsByRequesterIdAndEventId(userId, eventId))
                 throw new ConflictException("User tries to make duplicate request", "Forbidden action");
@@ -72,6 +75,10 @@ public class RequestService {
             requestRepository.save(newRequest);
             return RequestMapper.toDto(newRequest);
         });
+
+        statClient.sendRegister(userId, eventId);
+
+        return result;
     }
 
     // Отмена своего запроса на участие в событии
@@ -189,6 +196,14 @@ public class RequestService {
                         r -> (Long) r[0],
                         r -> (Long) r[1]
                 ));
+    }
+
+    @Transactional(readOnly = true)
+    public String checkParticipation(Long userId, Long eventId) {
+        if (requestRepository.existsByRequesterIdAndEventIdAndStatus(userId, eventId, ParticipationRequestStatus.CONFIRMED)) {
+            return "true";
+        }
+        throw new NotFoundException("Not found CONFIRMED request for user " + userId + " and event " + eventId);
     }
 
 }

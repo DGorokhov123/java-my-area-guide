@@ -17,6 +17,10 @@ main-postgres/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+tester-0.0.1.jar
+/tester.bat
+tester.txt
+
 ### IntelliJ IDEA ###
 .idea
 *.iws
@@ -25,3 +29,4 @@ main-postgres/
 /stat-postgres/
 /main-postgres/
 /.github/
+/execution-report.txt

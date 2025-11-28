@@ -1,0 +1,61 @@
+info:
+  app:
+    name: aggregator
+    description: My Area Guide
+    version: 1.0-SNAPSHOT
+  company:
+    name: Somekind Software
+
+my-area-guide:
+  kafka:
+    user-action-topic: stats.user-actions.v1
+    events-similarity-topic: stats.events-similarity.v1
+  aggregator:
+    minimum-sum-algorithm: optimized
+    weights:
+      like: 1.0
+      register: 0.8
+      view: 0.4
+
+server:
+  shutdown: graceful
+
+logging:
+  level:
+    ru.practicum.service.UserActionService: DEBUG
+    io.grpc: INFO
+
+management:
+  endpoints.web.exposure.include: health,info,metrics
+  endpoint.health.show-details: always
+  metrics.export.prometheus.enabled: true
+  info.env.enabled: true
+
+spring:
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      auto-startup: false
+      key-serializer: org.apache.kafka.common.serialization.VoidSerializer
+      value-serializer: ru.practicum.serializer.GeneralAvroSerializer
+      acks: all
+      retries: 10
+      linger-ms: 5
+      properties:
+        enable.idempotence: true
+        max.in.flight.requests.per.connection: 5
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.VoidDeserializer
+      value-deserializer: ru.practicum.deserializer.UserActionAvroDeserializer
+      group-id: aggregator-consumer-group-01
+      auto-offset-reset: latest
+      enable-auto-commit: false
+      max-poll-records: 500
+    listener:
+      auto-startup: false
+      type: single
+      ack-mode: RECORD
+
+

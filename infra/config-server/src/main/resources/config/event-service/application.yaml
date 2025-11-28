@@ -19,6 +19,8 @@ management:
 
 explore-with-me:
   stat-server.discovery.name: stats-server
+  collector.discovery.name: collector
+  analyzer.discovery.name: analyzer
   datetime.format: yyyy-MM-dd HH:mm:ss
   main.datetime.format: yyyy-MM-dd HH:mm:ss
   stat.datetime.format: yyyy-MM-dd HH:mm:ss

@@ -1,0 +1,22 @@
+syntax = "proto3";
+package stats.service.dashboard;
+
+import "google/protobuf/empty.proto";
+
+import "message/similarity_reports.proto";
+
+option java_package = "ru.practicum.grpc.collector";
+option java_multiple_files = true;
+
+service RecommendationsController {
+
+  rpc GetRecommendationsForUser (grpc.message.similarity.reports.UserPredictionsRequestProto)
+      returns (stream grpc.message.similarity.reports.RecommendedEventProto);
+
+  rpc GetSimilarEvents (grpc.message.similarity.reports.SimilarEventsRequestProto)
+      returns (stream grpc.message.similarity.reports.RecommendedEventProto);
+
+  rpc GetInteractionsCount (grpc.message.similarity.reports.InteractionsCountRequestProto)
+      returns (stream grpc.message.similarity.reports.RecommendedEventProto);
+
+}

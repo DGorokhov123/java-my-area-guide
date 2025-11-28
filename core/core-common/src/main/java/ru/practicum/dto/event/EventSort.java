@@ -1,5 +1,5 @@
 package ru.practicum.dto.event;
 
 public enum EventSort {
-    EVENT_DATE, VIEWS
+    EVENT_DATE, VIEWS, RATING
 }
