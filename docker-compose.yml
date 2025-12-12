@@ -107,23 +107,6 @@ services:
       - eureka.instance.hostname=comment-service
       - server.port=8085
 
-  stats-server:
-    build: stats/stats-server
-    image: stats-server
-    container_name: stats-server
-    restart: on-failure
-    ports:
-      - "8090:8090"
-    depends_on:
-      - db-stat
-      - discovery-server
-      - config-server
-    environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://db-stat:5432/stat_db
-      - eureka.client.serviceUrl.defaultZone=http://discovery-server:8761/eureka/
-      - eureka.instance.hostname=stats-server
-      - server.port=8090
-
   db-main:
     image: postgres:alpine
     container_name: db-main
@@ -140,54 +123,3 @@ services:
       timeout: 5s
       interval: 5s
       retries: 10
-
-  db-stat:
-    image: postgres:alpine
-    container_name: db-stat
-    ports:
-      - "5432:5432"
-    volumes:
-      - ./stat-postgres:/var/lib/postgresql/data/
-    environment:
-      - POSTGRES_DB=stat_db
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=12345
-    healthcheck:
-      test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
-      timeout: 5s
-      interval: 5s
-      retries: 10
-
-  stats-kafka:
-    image: confluentinc/cp-kafka:latest
-    hostname: stats-kafka
-    container_name: stats-kafka
-    ports:
-      - "9092:9092"
-    environment:
-      KAFKA_NODE_ID: 1
-      KAFKA_PROCESS_ROLES: broker, controller
-      KAFKA_LISTENERS: INTERNAL://0.0.0.0:29092, EXTERNAL://0.0.0.0:9092, CONTROLLER://0.0.0.0:29093
-      KAFKA_ADVERTISED_LISTENERS: INTERNAL://stats-kafka:29092, EXTERNAL://localhost:9092
-      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
-      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT, EXTERNAL:PLAINTEXT, CONTROLLER:PLAINTEXT
-      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@stats-kafka:29093'
-      CLUSTER_ID: 'aaaaabb78bccc32ddd21ee'
-      KAFKA_DEFAULT_REPLICATION_FACTOR: 1
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_TELEMETRY_REPLICATION_FACTOR: 1
-
-  kafka-init-topics:
-    image: confluentinc/cp-kafka:latest
-    container_name: stats-kafka-init-topics
-    depends_on:
-      - stats-kafka
-    command: bash -c
-               'kafka-topics --create --partitions 1 --replication-factor 1 --if-not-exists 
-               --bootstrap-server stats-kafka:29092 --topic stats.user-actions.v1 &&
-               kafka-topics --create --partitions 1 --replication-factor 1 --if-not-exists 
-               --bootstrap-server stats-kafka:29092 --topic stats.events-similarity.v1 '
-    init: true

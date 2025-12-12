@@ -1,7 +1,8 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="GatewayServerApplication" type="Application" factoryName="Application" nameIsGenerated="true">
-    <option name="MAIN_CLASS_NAME" value="ru.practicum.GatewayServerApplication" />
+  <configuration default="false" name="GatewayServerApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+    <option name="FRAME_DEACTIVATION_UPDATE_POLICY" value="UnknownPolicyInFreeMode" />
     <module name="gateway-server" />
+    <option name="SPRING_BOOT_MAIN_CLASS" value="ru.practicum.GatewayServerApplication" />
     <extension name="coverage">
       <pattern>
         <option name="PATTERN" value="ru.practicum.*" />

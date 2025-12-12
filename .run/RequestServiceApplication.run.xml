@@ -1,7 +1,8 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="RequestServiceApplication" type="Application" factoryName="Application" nameIsGenerated="true">
-    <option name="MAIN_CLASS_NAME" value="ru.practicum.RequestServiceApplication" />
+  <configuration default="false" name="RequestServiceApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+    <option name="FRAME_DEACTIVATION_UPDATE_POLICY" value="UnknownPolicyInFreeMode" />
     <module name="request-service" />
+    <option name="SPRING_BOOT_MAIN_CLASS" value="ru.practicum.RequestServiceApplication" />
     <extension name="coverage">
       <pattern>
         <option name="PATTERN" value="ru.practicum.*" />
