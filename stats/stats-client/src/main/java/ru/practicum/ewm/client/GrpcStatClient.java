@@ -3,10 +3,7 @@ package ru.practicum.ewm.client;
 import com.google.protobuf.Timestamp;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
-import ru.practicum.EventHitDto;
-import ru.practicum.EventStatsResponseDto;
 import ru.practicum.grpc.collector.RecommendationsControllerGrpc;
 import ru.practicum.grpc.collector.UserActionControllerGrpc;
 import ru.practicum.grpc.similarity.reports.InteractionsCountRequestProto;
@@ -16,12 +13,10 @@ import ru.practicum.grpc.user.action.ActionTypeProto;
 import ru.practicum.grpc.user.action.UserActionProto;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-@Primary
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -29,17 +24,6 @@ public class GrpcStatClient implements StatClient {
 
     private final UserActionControllerGrpc.UserActionControllerBlockingStub userActionStub;
     private final RecommendationsControllerGrpc.RecommendationsControllerBlockingStub recommendationsStub;
-
-
-    @Override
-    public void hit(EventHitDto eventHitDto) {
-        throw new UnsupportedOperationException("Method hit() is not supported");
-    }
-
-    @Override
-    public Collection<EventStatsResponseDto> stats(LocalDateTime start, LocalDateTime end, List<String> uris, Boolean unique) {
-        throw new UnsupportedOperationException("Method stats() is not supported");
-    }
 
     @Override
     public String sendView(Long userId, Long eventId) {
