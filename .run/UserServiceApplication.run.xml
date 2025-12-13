@@ -1,10 +1,11 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="UserServiceApplication" type="Application" factoryName="Application" nameIsGenerated="true">
-    <option name="MAIN_CLASS_NAME" value="ru.practicum.UserServiceApplication" />
+  <configuration default="false" name="UserServiceApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+    <option name="FRAME_DEACTIVATION_UPDATE_POLICY" value="UnknownPolicyInFreeMode" />
     <module name="user-service" />
+    <option name="SPRING_BOOT_MAIN_CLASS" value="ru.practicum.UserServiceApplication" />
     <extension name="coverage">
       <pattern>
-        <option name="PATTERN" value="ru.practicum.user.*" />
+        <option name="PATTERN" value="ru.practicum.*" />
         <option name="ENABLED" value="true" />
       </pattern>
     </extension>

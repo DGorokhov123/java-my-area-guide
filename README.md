@@ -1,51 +1,63 @@
 # My Area Guide
 
-My Area Guide is a web application for people who want to be in touch with 
-current events in their local areas.
+My Area Guide - web-приложение, Афиша локальных событий.
+Приложение предназначено для людей, которые хотят быть на связи с местным сообществом, следить за новыми событиями
+и принимать в них участие.
 
-People can view the list of events, make participation requests, get approvals or rejections, 
-leave comments.
+- Пользователи могут просматривать списки событий, отправлять заявки на участие, получать подтверждения или отказы,
+оставлять комментарии и лайки.
+- Организаторы могут создавать новые события и управлять списками участников
+- Администраторы могут управлять событиями, пользователями, категориями, комментариями и создавать подборки событий.
 
-Event makers can start new events and manage participants lists
+Приложение работает в связке с рекомендательной системой
+[Recommend Me More](https://github.com/DGorokhov123/java-collaborative-filtering).
+Эта система может давать пользователям индивидуальные рекомендации на основании истории пользовательского поведения, 
+подбирать похожие события и ранжировать события по популярности.
 
-Administrators can manage events, users, categories and make compilations of events. 
-Also, they have statistics microservice to control important metrics. 
+В приложении используется микросервисная архитектура, построенная по принципам DDD.
+Микросервисы построены вокруг 4 базовых типов сущностей:
+- Пользователи (модуль **_user-service_**)
+- События (модуль **_event-service_**)
+- Заявки (модуль **_request-service_**)
+- Комментарии (модуль **_comment-service_**)
 
-# Infrastructure modules (folder `/infra`)
+Взаимодействие микросервисов между собой осуществляется с помощью REST-контроллеров и Feign-клиентов, 
+имплементирующих общие API-интерфейсы, что обеспечивает гарантию совместимости API.
+Приложение использует Spring Eureka Discovery для управления инстансами микросервисов, а также Spring Cloud Gateway
+для доступа к системе извне. Эти технологии обеспечивают балансировку нагрузки между микросервисами как для внешних 
+вызовов (через Gateway), так и для внутренних (через Feign-клиенты). Также Service Discovery используется для интеграции
+приложения с микросервисами рекомендательной системы.
+
+# Инфраструктурные модули (папка `/infra`)
+
+Используются:
+- String Boot
+- Spring Cloud Eureka server
+- Spring Cloud Config server
+- Spring Cloud Gateway server
 
 ## Discovery Service
 
-The module `discovery-server` implements Service Registry - the central part of 
-Service Discovery pattern. 
-
-Stack:
-- String Boot
-- Spring Cloud Eureka server 
+Модуль **discovery-server** реализует Service Registry - центральный управляющий модуль, обеспечивающий
+взаимодействие между микросервисами, load balancing, multi-instance, health-checks и т.д.
 
 ## Configuration Service
 
-The module `config-server` implements an External Configuration pattern as a central storage 
-of configuration files for all microservices except discovery.
-
-Stack:
-- String Boot
-- Spring Cloud Config server
+Модуль **config-server** реализует паттерн External Configuration в качестве центрального хранилища конфигураций 
+для всех микросервисов, кроме **discovery-server**.
 
 ## Gateway Service
 
-The module `gateway-server` implements an API Gateway pattern. It works as a single entry point
-for all microservices. 
+Модуль **gateway-server** реализует паттерн API Gateway.
+Он работает как единая точка входа извне для всех микросервисов.
 
-Stack:
-- String Boot
-- Spring Cloud Gateway server
+# Модули основного приложения (папка `/core`)
 
-# Application core modules (folder `/core`)
+Приложение состоит из 4 интегрированных микросервисов. Каждый микросервис работает с отдельной базой данных 
+(для упрощения в данном релизе реализованы как разные схемы в единой бд). 
+Взаимодействие осуществляется посредством Feign-клиентов с поддержкой circuit breaker на базе Resilience4j.
 
-The Microservice-based application contains 4 integrated services. They have separate databases 
-(implemented as different schemas in this release). The interaction is realized through Feign-clients with circuit breaker. 
-
-Stack:
+Используются:
 - Java ٩(◕‿◕｡)۶
 - String Boot
 - Spring MVC (REST)
@@ -54,57 +66,67 @@ Stack:
 - OpenFeign client + Resilience4j
 - PostgreSQL
 
-## Common library
+## Модуль общей библиотеки
 
-The module `core-common` contains common classes and interfaces used by all core modules such as:
-- API description interfaces
-- Feign client interaction helpers
+Модуль **core-common** содержит общие классы и интерфейсы, используемые в разных модулях, в частности:
+- Интерфейсы описания API
+- Вспомогательные классы Feign-клиентов
 - DTO
-- Exceptions and exception handlers
-- Validation custom annotations
+- Исключения и обработчики исключений
+- Кастомные валидаторы и аннотации.
 
-## User Management Service
+## Сервис управления пользователями `user-service`
 
-The module `user-service` provides Admin interface to manage users. It doesn't access other services
-but provides them information about users.
+Микросервис **user-service** предоставляет интерфейс администратора для управления пользователями.
+Он не обращается к другим сервисам, но предоставляет им информацию о пользователях.
 
-Public API Specification: [API-user-service-specification.json](API-user-service-specification.json)
+Спецификация внешнего API: [API-user-service-specification.json](API-user-service-specification.json)
 
-Interaction API endpoints:
-- GET /admin/users/{userId}/short (returns UserShortDto to common interaction)
-- GET /admin/users/all/short (returns list of UserShortDto)
-- GET /admin/users/all/full (returns list of UserDto)
+API межсервисного взаимодействия:
+- GET /admin/users/{userId}/short (возвращает UserShortDto с базовой информацией)
+- GET /admin/users/all/short (возвращает список UserShortDto)
+- GET /admin/users/all/full (возвращает список UserDto с полной информацией)
 
-## Event Management Service
+## Сервис управления событиями `event-service`
 
-The module `event-service` provides Admin, Private and Public interface to operate events - the central 
-entity in application. The module interacts with request-service (to get information about requests number) 
-and user-service (to get extended user information)
+Микросервис **event-service** предоставляет приватный, публичный и администраторский API для управления событиями - 
+центральной сущностью в приложении. Сервис взаимодействует с другими сервисами: 
+- **request-service** (запрашивает информацию о количестве заявок на участие в событии) 
+- **user-service** (запрашивает расширенную информацию о пользователе)
 
-Public API Specification: [API-event-service-specification.json](API-event-service-specification.json)
+Спецификация внешнего API: [API-event-service-specification.json](API-event-service-specification.json)
 
-Interaction API endpoints:
-- GET /events/{id}/dto/interaction (returns shortened EventInteractionDto to common interaction)
-- GET /events/{id}/dto/comment (returns EventCommentDto for comment-service)
-- POST /events/dto/list/comment (returns list of EventCommentDto for comment-service)
+API межсервисного взаимодействия:
+- GET /events/{id}/dto/interaction (возвращает объект данных EventInteractionDto с информацией о событии)
+- GET /events/{id}/dto/comment (возвращает сокращенный объект EventCommentDto для сервиса комментариев)
+- POST /events/dto/list/comment (возвращает список EventCommentDto для сервиса комментариев)
 
-## Participation Requests Management Service
+## Сервис управления заявками `request-service`
 
-The module `request-service` provides Private interface to operate participation requests. It interacts with
-event-service and user-service (to get extended info and check existence)
+Микросервис **request-service** предоставляет пользовательский интерфейс для управления заявками на участие в событиях.
+Он обращается к сервисам **event-service** and **user-service** для получения расширенной информации о сущностях, а 
+также проверок их существования.
 
-Public API Specification: [API-request-service-specification.json](API-request-service-specification.json)
+Спецификация внешнего API: [API-request-service-specification.json](API-request-service-specification.json)
 
-Interaction API endpoints:
-- POST /requests/confirmed (returns map of confirmed requests by event ID list)
+API межсервисного взаимодействия:
+- POST /requests/confirmed (возвращает Map количеств подтвержденных заявок для списка ID событий)
 
-## Event Comments Management Service
+## Сервис управления комментариями `comment-service`
 
-The module `comment-service` provides Admin, Private and Public interface to operate comments to events.
-It interacts with event-service and user-service (to get extended info and check existence)
+Микросервис **comment-service** предоставляет администраторский, приватный и публичный интерфейсы для управления
+комментариями к событиям.
+Он обращается к сервисам **event-service** and **user-service** для получения расширенной информации о сущностях, а
+также проверок их существования.
 
-Public API Specification: [API-comment-service-specification.json](API-comment-service-specification.json)
+Спецификация внешнего API: [API-comment-service-specification.json](API-comment-service-specification.json)
 
-# Author, with best wishes, 
-Dmitriy Gorokhov dg187@yandex.ru
-feat. Ivan Griko grikoivan@yandex.ru, Ahmed Kishev kishevahmed0@yandex.ru and Yandex Practucum team.
+# Модули рекомендательной системы (папка `/stats`)
+
+Модуль **stats-client** содержит клиентский интерфейс для взаимодействия с рекомендательно системой
+[Recommend Me More](https://github.com/DGorokhov123/java-collaborative-filtering).
+Клиент использует gRPC+Protobuf для взаимодействия с микросервисами рекомендательной системы. 
+
+Модуль **proto-schemas** содержит .proto файлы с описанием протокола и автоматически генерируемые Java-классы, 
+используемые gRPC-клиентом.
+

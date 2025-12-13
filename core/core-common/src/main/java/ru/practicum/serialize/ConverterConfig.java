@@ -1,4 +1,4 @@
-package ru.practicum.validation;
+package ru.practicum.serialize;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
@@ -7,7 +7,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 @RequiredArgsConstructor
-public class WebConfig implements WebMvcConfigurer {
+public class ConverterConfig implements WebMvcConfigurer {
 
     private final StringToLocalDateTimeConverter stringToLocalDateTimeConverter;
     private final StringToBooleanConverter stringToBooleanConverter;
@@ -17,4 +17,5 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addConverter(stringToLocalDateTimeConverter);
         registry.addConverter(stringToBooleanConverter);
     }
+
 }

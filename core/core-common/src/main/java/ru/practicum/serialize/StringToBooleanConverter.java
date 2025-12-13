@@ -1,8 +1,7 @@
-package ru.practicum.validation;
+package ru.practicum.serialize;
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Component;
-
 
 @Component
 public class StringToBooleanConverter implements Converter<String, Boolean> {
