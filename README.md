@@ -31,7 +31,7 @@ My Area Guide - web-приложение, Афиша локальных собы
 # Инфраструктурные модули (папка `/infra`)
 
 Используются:
-- String Boot
+- Spring Boot
 - Spring Cloud Eureka server
 - Spring Cloud Config server
 - Spring Cloud Gateway server
@@ -59,7 +59,7 @@ My Area Guide - web-приложение, Афиша локальных собы
 
 Используются:
 - Java ٩(◕‿◕｡)۶
-- String Boot
+- Spring Boot
 - Spring MVC (REST)
 - Spring Data JPA (Hibernate)
 - Spring Cloud Discovery and Configuration
